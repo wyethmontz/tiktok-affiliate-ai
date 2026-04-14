@@ -67,12 +67,23 @@ def generate_images(media_prompts: str, max_images: int = 4) -> list[str]:
     for i, prompt in enumerate(lines):
         try:
             if i > 0:
-                time.sleep(2)  # Avoid rate limiting between requests
+                time.sleep(5)  # Avoid rate limiting between requests
             url = _run_prediction(prompt)
             if url:
                 image_urls.append(url)
         except Exception as e:
-            print(f"[IMAGE GEN ERROR] {e}")
+            # Retry once after a longer wait on rate limit
+            if "429" in str(e):
+                print(f"[IMAGE GEN] Rate limited, retrying in 10s...")
+                time.sleep(10)
+                try:
+                    url = _run_prediction(prompt)
+                    if url:
+                        image_urls.append(url)
+                except Exception as e2:
+                    print(f"[IMAGE GEN ERROR] Retry failed: {e2}")
+            else:
+                print(f"[IMAGE GEN ERROR] {e}")
             continue
 
     return image_urls
