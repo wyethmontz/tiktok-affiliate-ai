@@ -1,0 +1,23 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json .
+RUN npm ci
+
+COPY . .
+
+# Next.js bakes NEXT_PUBLIC_* vars into the JS at build time
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ARG NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder
+
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
