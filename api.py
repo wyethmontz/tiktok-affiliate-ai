@@ -1,7 +1,7 @@
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -41,6 +41,20 @@ class AdRequest(BaseModel):
     audience: str = Field(..., max_length=200)
     goal: str = Field(..., max_length=200)
     affiliate_link: str = Field("", max_length=500)
+    product_image_urls: list[str] = Field(default_factory=list)
+
+    @field_validator("product_image_urls")
+    @classmethod
+    def validate_image_urls(cls, v):
+        if len(v) > 4:
+            raise ValueError("Maximum 4 product images allowed")
+        for url in v:
+            url = url.strip()
+            if url and not url.startswith(("http://", "https://")):
+                raise ValueError(f"Invalid image URL: {url}")
+            if len(url) > 2000:
+                raise ValueError("Image URL too long (max 2000 chars)")
+        return v
 
 
 def _run_job(job_id: str, input_data: dict):
@@ -67,6 +81,7 @@ def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTas
         "platform": "TikTok",
         "goal": ad.goal.strip(),
         "affiliate_link": ad.affiliate_link.strip(),
+        "product_image_urls": [url.strip() for url in ad.product_image_urls if url.strip()],
     }
 
     job_id = jobs.create_job(input_data)

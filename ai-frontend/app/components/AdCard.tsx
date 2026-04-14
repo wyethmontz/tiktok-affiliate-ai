@@ -14,6 +14,7 @@ type Ad = {
   images: string | null;
   voiceover_url: string | null;
   compliance_status: string | null;
+  tiktok_caption: string | null;
   created_at: string;
 };
 
@@ -40,11 +41,16 @@ export default function AdCard({ ad }: { ad: Ad }) {
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5 flex flex-col gap-3">
       {firstImage && (
-        <img
-          src={firstImage}
-          alt={ad.product}
-          className="rounded-lg w-full h-48 object-cover border border-gray-700"
-        />
+        <div className="relative">
+          <img
+            src={firstImage}
+            alt={ad.product}
+            className="rounded-lg w-full h-48 object-cover border border-gray-700"
+          />
+          <span className="absolute top-2 left-2 bg-black/70 text-yellow-400 text-xs font-semibold px-2 py-0.5 rounded">
+            AI Generated
+          </span>
+        </div>
       )}
       <div className="flex justify-between items-start">
         <div>

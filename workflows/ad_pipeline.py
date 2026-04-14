@@ -10,6 +10,46 @@ from agents.optimizer import run_optimizer
 from core.db import save_ad
 from core.image_gen import generate_images
 from core.voiceover import generate_voiceover
+from core.llm import call_claude
+
+MAX_COMPLIANCE_RETRIES = 2
+
+def _fix_copy(copy, compliance_feedback, input_data):
+    """Send the failed copy back to AI with compliance issues to auto-fix."""
+    prompt = f"""You are a TikTok content creator. Your script was flagged for compliance issues.
+
+ORIGINAL SCRIPT:
+{copy}
+
+COMPLIANCE ISSUES FOUND:
+{compliance_feedback}
+
+PRODUCT (only facts you can use): {input_data.get('product', '')}
+AUDIENCE: {input_data.get('audience', '')}
+
+Rewrite the script to fix ALL the issues above. Keep the same tone, format, and language (Tagalog).
+
+RULES:
+- Remove any fabricated claims, prices, or statistics
+- Remove any fake testimonials or social proof
+- Remove any fake urgency
+- Make sure CTA includes #ad disclosure
+- Only describe what the product actually does based on the product name
+- Keep it 60-100 words, same TikTok style
+
+Return in this format:
+
+SCRIPT:
+[fixed TikTok script]
+
+CTA:
+[fixed call-to-action with #ad]
+
+HASHTAGS:
+[5-8 hashtags including #ad]
+"""
+    return call_claude(prompt)
+
 
 def run_pipeline(input_data, on_step=None):
 
@@ -58,18 +98,38 @@ def run_pipeline(input_data, on_step=None):
         "tiktok_format": strategy.get("tiktok_format", ""),
     })
 
-    # STEP 5 — COMPLIANCE CHECK
-    _step("Checking TikTok compliance...")
+    # STEP 5 — COMPLIANCE CHECK + AUTO-FIX LOOP
     original_input_str = f"Product: {input_data['product']}, Audience: {input_data.get('audience', '')}, Goal: {input_data.get('goal', '')}"
-    compliance = run_compliance({
-        "copy": copy,
-        "creative": creative,
-        "product": input_data["product"],
-        "original_input": original_input_str,
-    })
+    compliance_status = "FAIL"
 
-    # Parse compliance status
-    compliance_status = "PASS" if "STATUS: PASS" in compliance.upper() else "FAIL"
+    for attempt in range(1, MAX_COMPLIANCE_RETRIES + 2):  # 1 initial + 2 retries
+        _step(f"Checking TikTok compliance (attempt {attempt})...")
+        compliance = run_compliance({
+            "copy": copy,
+            "creative": creative,
+            "product": input_data["product"],
+            "original_input": original_input_str,
+        })
+
+        compliance_status = "PASS" if "STATUS: PASS" in compliance.upper() else "FAIL"
+
+        if compliance_status == "PASS":
+            print(f"[COMPLIANCE] Passed on attempt {attempt}")
+            break
+
+        if attempt <= MAX_COMPLIANCE_RETRIES:
+            _step(f"Auto-fixing compliance issues (attempt {attempt})...")
+            print(f"[COMPLIANCE] Failed — auto-fixing...")
+            copy = _fix_copy(copy, compliance, input_data)
+
+            # Re-run creative director with fixed copy
+            _step("Re-planning visual scenes...")
+            creative = run_creative({
+                "script": copy,
+                "tiktok_format": strategy.get("tiktok_format", ""),
+            })
+        else:
+            print(f"[COMPLIANCE] Still failing after {MAX_COMPLIANCE_RETRIES} retries — saving with FAIL status")
 
     # STEP 6 — QA CHECK
     _step("Running QA evaluation...")
@@ -83,12 +143,18 @@ def run_pipeline(input_data, on_step=None):
         "scenes": creative
     })
 
-    # STEP 8 — IMAGE GENERATION
-    _step("Generating TikTok images...")
-    try:
-        image_urls = generate_images(media)
-    except Exception:
-        image_urls = []
+    # STEP 8 — IMAGE GENERATION (or use provided product images)
+    product_image_urls = input_data.get("product_image_urls", [])
+
+    if product_image_urls:
+        _step("Using provided product images...")
+        image_urls = product_image_urls
+    else:
+        _step("Generating TikTok images...")
+        try:
+            image_urls = generate_images(media)
+        except Exception:
+            image_urls = []
 
     # STEP 9 — VOICEOVER
     _step("Generating voiceover...")
@@ -97,7 +163,21 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         voiceover_url = None
 
-    # STEP 10 — SAVE TO SUPABASE
+    # STEP 10 — GENERATE TIKTOK CAPTION
+    _step("Creating TikTok caption...")
+    # Extract CTA and hashtags from copy
+    cta_match = re.search(r'CTA:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
+    hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
+    cta_text = cta_match.group(1).strip() if cta_match else ""
+    hashtags = hashtag_match.group(1).strip() if hashtag_match else "#ad #TikTokShop #fyp"
+    # Ensure AIGC disclosure is in hashtags
+    if "#AIgenerated" not in hashtags.lower().replace(" ", ""):
+        hashtags = hashtags.rstrip() + " #AIgenerated"
+    if "#ad" not in hashtags.lower():
+        hashtags = "#ad " + hashtags
+    tiktok_caption = f"{cta_text}\n\n{hashtags}".strip()
+
+    # STEP 11 — SAVE TO SUPABASE
     _step("Saving to database...")
 
     score_match = re.search(r'\d+', qa or "")
@@ -119,6 +199,7 @@ def run_pipeline(input_data, on_step=None):
         "images": ",".join(image_urls) if image_urls else None,
         "voiceover_url": voiceover_url,
         "compliance_status": compliance_status,
+        "tiktok_caption": tiktok_caption,
     }
 
     save_ad(final_payload)

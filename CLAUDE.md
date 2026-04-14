@@ -63,13 +63,43 @@ User Input (product, audience, goal, affiliate_link)
    -> Frontend          (displays results with audio player)
 ```
 
+### TikTok AIGC Policy (Official — from support.tiktok.com)
+
+**What counts as AIGC:**
+- Images, video, audio generated or modified by AI
+- AI-generated realistic human likenesses
+- AI voices, AI-altered speech
+- Entirely AI-generated videos/images of real or fictional people, places, events
+
+**Labeling Requirements:**
+- Creators MUST label all realistic AIGC
+- Use TikTok's in-app toggle: Post Settings > More options (...) > AI-generated content ON
+- Can also add text, hashtag sticker, or description disclosure
+- Labeling does NOT affect video distribution
+
+**Prohibited AIGC (even if labeled):**
+- Fake authoritative sources or crisis events
+- Fake endorsements by public figures
+- Likeness of people under 18
+- Likeness of adult private figures without permission
+- Content that misleads about real events
+
+**Project AIGC Requirements:**
+Every generated ad MUST include:
+1. AIGC disclosure reminder in the output
+2. #AIgenerated hashtag in the tiktok_caption
+3. Instruction to enable TikTok's AIGC label toggle when posting
+4. #ad disclosure for affiliate transparency
+
 ### TikTok Compliance Rules (enforced by Compliance Agent)
 1. No fabricated claims — no invented prices, stats, testimonials
 2. Affiliate disclosure required — #ad or #sponsored in every CTA
-3. AI content disclosure — label AI-generated content
+3. AI content disclosure — #AIgenerated hashtag + AIGC label reminder
 4. No fake urgency/scarcity — no "selling out fast" unless verified
 5. No health/beauty claims without evidence
 6. Product claims must match what user provided, nothing invented
+7. No portrayal of real public figures (prohibited even if labeled)
+8. No fake "in-hand" product usage passed off as real person
 
 ### Backend (Python / FastAPI)
 - `api.py` — FastAPI server with all routes
@@ -110,7 +140,7 @@ User Input (product, audience, goal, affiliate_link)
 ## Database (Supabase)
 
 Table: `ads`
-Columns: id (uuid), product, audience, platform, goal, hook, angle, positioning, copy, creative, qa_score, qa_score_numeric (int), media, images (text), voiceover_url (text), compliance_status (text), created_at (timestamptz)
+Columns: id (uuid), product, audience, platform, goal, hook, angle, positioning, copy, creative, qa_score, qa_score_numeric (int), media, images (text), voiceover_url (text), compliance_status (text), tiktok_caption (text), created_at (timestamptz)
 
 ## Dependencies
 
