@@ -30,9 +30,11 @@ RULES:
 - Use TikTok-native formats: POV, storytime, GRWM, "things I found on TikTok Shop", duet-bait, unboxing
 - The angle should feel organic, not like a traditional ad
 
+IMPORTANT: Write the hook in Tagalog (natural spoken Filipino, not formal). The angle and positioning can be in English.
+
 EXAMPLE OUTPUT:
 {{
-  "hook": "POV: you find the lip tint everyone's been hiding",
+  "hook": "POV: nahanap mo yung lip tint na hinahanap ng lahat",
   "angle": "TikTok Shop discovery storytime",
   "positioning": "hidden gem product for school fits",
   "tiktok_format": "GRWM"

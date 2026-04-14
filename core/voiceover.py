@@ -35,7 +35,7 @@ def generate_voiceover(copy: str, voice_id: str = DEFAULT_VOICE_ID) -> str | Non
     }
     body = {
         "text": text,
-        "model_id": "eleven_monolingual_v1",
+        "model_id": "eleven_multilingual_v2",
         "voice_settings": {
             "stability": 0.4,
             "similarity_boost": 0.75,
