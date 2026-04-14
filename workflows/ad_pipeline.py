@@ -11,6 +11,7 @@ from core.db import save_ad
 from core.image_gen import generate_images
 from core.voiceover import generate_voiceover
 from core.llm import call_claude
+from core.video_assembler import assemble_video
 
 MAX_COMPLIANCE_RETRIES = 2
 
@@ -163,7 +164,14 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         voiceover_url = None
 
-    # STEP 10 — GENERATE TIKTOK CAPTION
+    # STEP 10 — VIDEO ASSEMBLY (FFmpeg: images + voiceover + captions → MP4)
+    _step("Assembling TikTok video...")
+    try:
+        video_url = assemble_video(image_urls, voiceover_url, copy)
+    except Exception:
+        video_url = None
+
+    # STEP 11 — GENERATE TIKTOK CAPTION
     _step("Creating TikTok caption...")
     # Extract CTA and hashtags from copy
     cta_match = re.search(r'CTA:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
@@ -177,7 +185,7 @@ def run_pipeline(input_data, on_step=None):
         hashtags = "#ad " + hashtags
     tiktok_caption = f"{cta_text}\n\n{hashtags}".strip()
 
-    # STEP 11 — SAVE TO SUPABASE
+    # STEP 12 — SAVE TO SUPABASE
     _step("Saving to database...")
 
     score_match = re.search(r'\d+', qa or "")
@@ -200,6 +208,7 @@ def run_pipeline(input_data, on_step=None):
         "voiceover_url": voiceover_url,
         "compliance_status": compliance_status,
         "tiktok_caption": tiktok_caption,
+        "video_url": video_url,
     }
 
     save_ad(final_payload)

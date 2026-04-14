@@ -15,6 +15,7 @@ type Ad = {
   voiceover_url: string | null;
   compliance_status: string | null;
   tiktok_caption: string | null;
+  video_url: string | null;
   created_at: string;
 };
 
@@ -50,6 +51,11 @@ export default function AdCard({ ad }: { ad: Ad }) {
           <span className="absolute top-2 left-2 bg-black/70 text-yellow-400 text-xs font-semibold px-2 py-0.5 rounded">
             AI Generated
           </span>
+          {ad.video_url && (
+            <span className="absolute top-2 right-2 bg-pink-600 text-white text-xs font-semibold px-2 py-0.5 rounded">
+              Video
+            </span>
+          )}
         </div>
       )}
       <div className="flex justify-between items-start">

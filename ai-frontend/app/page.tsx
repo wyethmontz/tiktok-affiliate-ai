@@ -287,7 +287,30 @@ export default function Home() {
               <p className="text-white whitespace-pre-wrap">{result.qa_score}</p>
             </div>
 
-            {result.voiceover_url && (
+            {/* TikTok Video */}
+            {result.video_url && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-400">TikTok Video</h3>
+                  <a
+                    href={result.video_url}
+                    download="tiktok-ad.mp4"
+                    className="text-xs bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg transition-colors"
+                  >
+                    Download MP4
+                  </a>
+                </div>
+                <video
+                  controls
+                  className="w-full max-w-sm mx-auto rounded-lg border border-gray-700"
+                  style={{ aspectRatio: "9/16" }}
+                >
+                  <source src={result.video_url} type="video/mp4" />
+                </video>
+              </div>
+            )}
+
+            {result.voiceover_url && !result.video_url && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-400 mb-2">Voiceover</h3>
                 <audio controls className="w-full">

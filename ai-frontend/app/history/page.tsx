@@ -19,6 +19,7 @@ type Ad = {
   voiceover_url: string | null;
   compliance_status: string | null;
   tiktok_caption: string | null;
+  video_url: string | null;
   created_at: string;
 };
 
