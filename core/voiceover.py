@@ -8,8 +8,8 @@ load_dotenv()
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
 
-# Default voice: "Rachel" — young, female, American, casual (good for TikTok)
-DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"
+# Default voice: "Sarah" — mature, confident (available on free tier)
+DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
 
 
 def generate_voiceover(copy: str, voice_id: str = DEFAULT_VOICE_ID) -> str | None:
