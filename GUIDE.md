@@ -13,7 +13,16 @@ Before your first post, you only need 3 things done:
    - Example: `🚗 Toy finds sa TikTok Shop 🛒 Para sa bata at collectors 👇 Watch my reviews!`
 3. **Profile photo** — use a product image from your pipeline or your face
 
-**Then post your first video immediately.** Everything else (business account, affiliate links) can happen after. The algorithm starts learning from post #1.
+**Then post your first video at the right time:**
+
+| Time (PHT) | Priority |
+|------------|----------|
+| **6-9 PM** | Best — peak Filipino TikTok hours |
+| 12-1 PM | Good — lunch break scroll |
+| 7-8 AM | Good — morning scroll |
+| 10-11 PM | OK — late night |
+
+Everything else (business account, affiliate links) can happen after. The algorithm starts learning from post #1.
 
 ### 1.1 Create Your Account
 
