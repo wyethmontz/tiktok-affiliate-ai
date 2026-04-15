@@ -7,39 +7,27 @@ import random
 BGM_STYLES = {
     "lofi": {
         "description": "Chill lo-fi beat — relaxed, casual TikTok vibe",
-        # Soft chord progression with reverb
-        "filter": (
-            "sine=f=261.63:d={dur},sine=f=329.63:d={dur},sine=f=392:d={dur},"
-            "amix=inputs=3:duration=first,"
-            "tremolo=f=2:d=0.4,"
-            "aecho=0.8:0.88:60:0.4,"
-            "lowpass=f=800,"
-            "volume=0.12"
-        ),
+        "freq": 261.63,
+        "tremolo_freq": 2,
+        "tremolo_depth": 0.4,
+        "echo_delay": 60,
+        "lowpass": 800,
     },
     "upbeat": {
         "description": "Energetic upbeat — exciting product reveal",
-        # Higher pitched, faster rhythm
-        "filter": (
-            "sine=f=523.25:d={dur},sine=f=659.25:d={dur},sine=f=783.99:d={dur},"
-            "amix=inputs=3:duration=first,"
-            "tremolo=f=4:d=0.6,"
-            "aecho=0.6:0.6:40:0.3,"
-            "lowpass=f=1200,"
-            "volume=0.12"
-        ),
+        "freq": 523.25,
+        "tremolo_freq": 4,
+        "tremolo_depth": 0.6,
+        "echo_delay": 40,
+        "lowpass": 1200,
     },
     "soft": {
         "description": "Soft ambient — gentle product showcase",
-        # Very soft low tones
-        "filter": (
-            "sine=f=196:d={dur},sine=f=246.94:d={dur},"
-            "amix=inputs=2:duration=first,"
-            "tremolo=f=1.5:d=0.3,"
-            "aecho=0.8:0.9:80:0.5,"
-            "lowpass=f=600,"
-            "volume=0.10"
-        ),
+        "freq": 196,
+        "tremolo_freq": 1.5,
+        "tremolo_depth": 0.3,
+        "echo_delay": 80,
+        "lowpass": 600,
     },
 }
 
@@ -55,8 +43,16 @@ def generate_bgm(duration: float, output_path: str, style: str = DEFAULT_STYLE) 
     if style not in BGM_STYLES:
         style = DEFAULT_STYLE
 
-    bgm = BGM_STYLES[style]
-    audio_filter = bgm["filter"].format(dur=duration)
+    s = BGM_STYLES[style]
+
+    # Single sine wave with tremolo + echo + lowpass for a musical feel
+    audio_filter = (
+        f"sine=frequency={s['freq']}:duration={duration},"
+        f"tremolo=f={s['tremolo_freq']}:d={s['tremolo_depth']},"
+        f"aecho=0.8:0.88:{s['echo_delay']}:0.4,"
+        f"lowpass=f={s['lowpass']},"
+        f"volume=0.15"
+    )
 
     cmd = [
         "ffmpeg", "-y",
