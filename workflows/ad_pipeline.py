@@ -10,6 +10,7 @@ from agents.optimizer import run_optimizer
 from core.db import save_ad
 from core.image_gen import generate_images
 from core.product_scenes import generate_product_scenes
+from core.policy_checker import get_latest_rules
 from core.video_gen import generate_video_clips
 from core.voiceover import generate_voiceover
 from core.llm import call_claude
@@ -99,7 +100,14 @@ def run_pipeline(input_data, on_step=None):
         if on_step:
             on_step(name)
 
-    # STEP 0 — OPTIMIZER (learn from past ads)
+    # STEP 0 — FETCH LATEST TIKTOK RULES (cached 24h)
+    _step("Checking latest TikTok policies...")
+    try:
+        latest_rules = get_latest_rules()
+    except Exception:
+        latest_rules = None
+
+    # STEP 1 — OPTIMIZER (learn from past ads)
     _step("Analyzing past ad performance...")
     try:
         insights = run_optimizer()
@@ -160,6 +168,7 @@ def run_pipeline(input_data, on_step=None):
             "creative": creative,
             "product": input_data["product"],
             "original_input": original_input_str,
+            "latest_rules": latest_rules or "",
         })
 
         compliance_status = "PASS" if "STATUS: PASS" in compliance.upper() else "FAIL"

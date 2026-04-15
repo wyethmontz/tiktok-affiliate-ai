@@ -214,5 +214,8 @@ ai-frontend/out/
 # Uploaded product images
 uploads/
 
+# Policy cache
+policy_cache.json
+
 # Claude Code
 .claude/
