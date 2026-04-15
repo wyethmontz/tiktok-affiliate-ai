@@ -45,19 +45,23 @@ def generate_bgm(duration: float, output_path: str, style: str = DEFAULT_STYLE) 
 
     s = BGM_STYLES[style]
 
-    # Single sine wave with tremolo + echo + lowpass for a musical feel
-    audio_filter = (
-        f"sine=frequency={s['freq']}:duration={duration},"
-        f"tremolo=f={s['tremolo_freq']}:d={s['tremolo_depth']},"
-        f"aecho=0.8:0.88:{s['echo_delay']}:0.4,"
-        f"lowpass=f={s['lowpass']},"
-        f"volume=0.15"
-    )
+    # Generate two sine waves (root + fifth) and mix them for a fuller sound
+    freq2 = s['freq'] * 1.5  # perfect fifth interval
 
     cmd = [
         "ffmpeg", "-y",
         "-f", "lavfi",
-        "-i", audio_filter,
+        "-i", f"sine=frequency={s['freq']}:duration={duration}",
+        "-f", "lavfi",
+        "-i", f"sine=frequency={freq2}:duration={duration}",
+        "-filter_complex",
+        (
+            f"[0:a][1:a]amix=inputs=2:duration=first,"
+            f"tremolo=f={s['tremolo_freq']}:d={s['tremolo_depth']},"
+            f"aecho=0.8:0.88:{s['echo_delay']}:0.4,"
+            f"lowpass=f={s['lowpass']},"
+            f"volume=0.5"
+        ),
         "-t", str(duration),
         "-c:a", "aac",
         "-b:a", "128k",
