@@ -2,38 +2,36 @@
 
 ## Part 1: Setting Up Your TikTok Account
 
+### Priority Checklist (do these first, in order)
+
+Before your first post, you only need 3 things done:
+
+1. **Username** — niche-related, not generic
+   - Good: `@toyfinds.ph`, `@kuya.toys`, `@pinay.deals`
+   - Bad: `@user29384738`, `@john123`
+2. **Bio** — short, under 80 characters
+   - Example: `🚗 Toy finds sa TikTok Shop 🛒 Para sa bata at collectors 👇 Watch my reviews!`
+3. **Profile photo** — use a product image from your pipeline or your face
+
+**Then post your first video immediately.** Everything else (business account, affiliate links) can happen after. The algorithm starts learning from post #1.
+
 ### 1.1 Create Your Account
 
 1. Download TikTok from App Store or Google Play
 2. Sign up with **email** (not phone — easier to recover)
-3. Set your username: something brandable and niche-related
-   - Good: `@kuya.finds`, `@pinay.deals`, `@toysph.picks`
-   - Bad: `@user29384738`, `@john123`
-4. Add a profile photo (your face or a branded logo)
+3. Set username, bio, and profile photo (see checklist above)
+4. Post your first video
 
-### 1.2 Switch to Business Account
+### 1.2 Switch to Business Account (do later, not required to post)
 
-1. Profile > **Settings and privacy** > **Account** > **Switch to Business Account**
+1. Profile > **Settings and privacy** > **Account** > **Switch to Business Account** (or **Account type**)
 2. Pick category: **Retail** or **Online Shopping**
 3. This unlocks analytics and the ability to add links
+4. Free, instant, no verification needed
 
-### 1.3 Set Up Your Profile for Sales
+**Note:** If you can't find the option, skip it. It's not required to post or make sales.
 
-**Bio template:**
-```
-[Niche emoji] Best [niche] finds on TikTok Shop
-[Shopping emoji] Affiliate links below
-[Arrow emoji] Click the shop tab!
-```
-
-**Example:**
-```
-🚗 Best toy finds on TikTok Shop
-🛒 Curated deals for Pinoy parents
-👇 Shop my picks below!
-```
-
-### 1.4 Join TikTok Shop Affiliate Program
+### 1.3 Join TikTok Shop Affiliate Program (do after building audience)
 
 1. Go to **TikTok Seller Center** (seller-ph.tiktok.com) or search "TikTok Shop Affiliate" in your browser
 2. Click **Sign up as Affiliate/Creator**
@@ -44,9 +42,9 @@
 4. Once approved, you can browse the TikTok Shop marketplace and get affiliate links
 5. You earn **commission (5-20%)** on every sale through your link
 
-**Note:** You can start posting content immediately while waiting for affiliate approval. Build your audience first.
+**Note:** You can start posting content immediately while waiting for affiliate approval. Build your audience first — don't wait for approval to start posting.
 
-### 1.5 Account Settings for Compliance
+### 1.4 Account Settings for Compliance
 
 **Privacy settings:**
 - Profile > Settings > Privacy > set account to **Public** (required for reach)
