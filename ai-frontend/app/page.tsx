@@ -25,7 +25,7 @@ export default function Home() {
   const [dragOver, setDragOver] = useState(false);
   const [dragOverVideo, setDragOverVideo] = useState(false);
   const [useAiVideo, setUseAiVideo] = useState(false);
-  const [bgmStyle, setBgmStyle] = useState("upbeat");
+  const [bgmStyle] = useState("happy");
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");
@@ -388,26 +388,8 @@ export default function Home() {
         </div>
 
         {/* Background Music */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">Music:</span>
-          {[
-            { value: "lofi", label: "Lo-fi Chill" },
-            { value: "upbeat", label: "Upbeat" },
-            { value: "soft", label: "Soft Ambient" },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setBgmStyle(opt.value)}
-              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-                bgmStyle === opt.value
-                  ? "bg-pink-600 text-white"
-                  : "bg-gray-700 text-gray-400 hover:bg-gray-600"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 text-sm text-gray-400">
+          Happy ukulele background music (free, no copyright)
         </div>
 
         {/* AI Video Toggle */}
