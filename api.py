@@ -183,7 +183,9 @@ def get_job(request: Request, job_id: str):
 def list_ads(request: Request, search: str = ""):
     if len(search) > 100:
         raise HTTPException(status_code=400, detail="Search query too long")
-    query = supabase.table("ads").select("*").order("created_at", desc=True)
+    # Only select small fields for list view — skip huge base64 blobs (video_url, voiceover_url)
+    columns = "id,product,audience,platform,goal,hook,angle,positioning,copy,creative,qa_score,qa_score_numeric,media,images,compliance_status,tiktok_caption,created_at"
+    query = supabase.table("ads").select(columns).order("created_at", desc=True).limit(50)
     if search:
         query = query.ilike("product", f"%{search}%")
     return query.execute().data

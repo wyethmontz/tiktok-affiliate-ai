@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { API_URL } from "../../lib/api";
 
 type Ad = {
   id: string;
@@ -23,6 +25,8 @@ type Ad = {
 export default function AdCard({ ad }: { ad: Ad }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
+  const [fullAd, setFullAd] = useState<Ad | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [captionCopied, setCaptionCopied] = useState(false);
 
   const scoreMatch = ad.qa_score?.match(/\d+/);
@@ -105,22 +109,34 @@ export default function AdCard({ ad }: { ad: Ad }) {
 
       {/* Expand/Collapse toggle */}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={async () => {
+          if (!expanded && !fullAd) {
+            setLoadingDetails(true);
+            try {
+              const res = await axios.get(`${API_URL}/ads/${ad.id}`);
+              setFullAd(res.data);
+            } catch {
+              // Use what we have
+            }
+            setLoadingDetails(false);
+          }
+          setExpanded(!expanded);
+        }}
         className="text-sm text-pink-400 hover:text-pink-300 transition-colors text-left"
       >
-        {expanded ? "- Hide details" : "+ Show full details"}
+        {loadingDetails ? "Loading..." : expanded ? "- Hide details" : "+ Show full details"}
       </button>
 
       {/* Expanded details */}
       {expanded && (
         <div className="flex flex-col gap-4 border-t border-gray-700 pt-4">
           {/* Video */}
-          {ad.video_url && (
+          {(fullAd?.video_url || ad.video_url) && (
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-semibold text-gray-400">TikTok Video</h4>
                 <a
-                  href={ad.video_url}
+                  href={fullAd?.video_url || ad.video_url}
                   download="tiktok-ad.mp4"
                   className="text-xs bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg transition-colors"
                 >
@@ -132,7 +148,7 @@ export default function AdCard({ ad }: { ad: Ad }) {
                 className="w-full rounded-lg border border-gray-700"
                 style={{ aspectRatio: "9/16", maxHeight: "400px" }}
               >
-                <source src={ad.video_url} type="video/mp4" />
+                <source src={fullAd?.video_url || ad.video_url} type="video/mp4" />
               </video>
             </div>
           )}
@@ -197,11 +213,11 @@ export default function AdCard({ ad }: { ad: Ad }) {
           )}
 
           {/* Voiceover (if no video) */}
-          {ad.voiceover_url && !ad.video_url && (
+          {(fullAd?.voiceover_url || ad.voiceover_url) && !(fullAd?.video_url || ad.video_url) && (
             <div>
               <h4 className="text-sm font-semibold text-gray-400 mb-2">Voiceover</h4>
               <audio controls className="w-full">
-                <source src={ad.voiceover_url} type="audio/mpeg" />
+                <source src={fullAd?.voiceover_url || ad.voiceover_url} type="audio/mpeg" />
               </audio>
             </div>
           )}
