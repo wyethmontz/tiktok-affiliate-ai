@@ -13,23 +13,24 @@ KONTEXT_API_URL = "https://api.replicate.com/v1/models/black-forest-labs/flux-ko
 # Scene prompts: each generates a realistic "in-use" image from the product photo
 TOY_SCENE_PROMPTS = [
     (
-        "Close-up of a person's hands excitedly unboxing this product from a colorful package, "
-        "overhead angle, bright natural lighting, TikTok vertical format, authentic phone-shot feel"
+        "Place this single product on a clean table, one hand reaching to pick it up, "
+        "overhead angle, bright natural lighting, only one copy of the product visible, "
+        "TikTok vertical 9:16 format, authentic phone-shot feel"
     ),
     (
-        "A pair of hands holding this product up to the camera showing it off, "
-        "shallow depth of field, warm soft lighting, clean background, "
-        "vertical 9:16 TikTok style, casual social media photo"
+        "One pair of hands holding up this single product to the camera, showing it off, "
+        "shallow depth of field, warm soft lighting, simple clean background, "
+        "only one product in frame, vertical 9:16 TikTok style"
     ),
     (
-        "This product being used and played with on a table, hands interacting with it, "
-        "close-up action shot, colorful playful background, natural lighting, "
-        "vertical 9:16 TikTok content style"
+        "Close-up of this single product sitting on a white surface, one hand touching it, "
+        "product photography style, soft even lighting, no duplicates, "
+        "vertical 9:16 TikTok content, sharp focus on the product"
     ),
     (
-        "This product displayed beautifully with someone's hand reaching for it, "
-        "aesthetic flat lay style, soft pastel background, vertical 9:16, "
-        "TikTok product showcase angle, inviting and clickable"
+        "This single product centered in frame on a soft pastel background, "
+        "one hand gently presenting it from the side, aesthetic flat lay, "
+        "only one product visible, vertical 9:16 TikTok showcase style"
     ),
 ]
 
@@ -94,8 +95,8 @@ def _run_kontext(image_data_uri: str, prompt: str) -> str | None:
             "aspect_ratio": "9:16",
             "output_format": "jpg",
             "output_quality": 90,
-            "num_inference_steps": 28,
-            "guidance": 2.5,
+            "num_inference_steps": 30,
+            "guidance": 4.0,
         }
     }
 
