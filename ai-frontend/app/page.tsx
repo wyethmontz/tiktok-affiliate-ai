@@ -81,16 +81,16 @@ export default function Home() {
     // Google Drive share link → direct download
     const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
     if (driveMatch) {
-      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      return `https://drive.usercontent.google.com/download?id=${driveMatch[1]}&export=download`;
     }
     return url;
   }
 
   function getPreviewUrl(url: string): string {
-    // Google Drive → use lh3 thumbnail proxy (works without auth)
+    // Google Drive → use drive.usercontent.google.com (returns actual image)
     const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
     if (driveMatch) {
-      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w400`;
+      return `https://drive.usercontent.google.com/download?id=${driveMatch[1]}&export=download`;
     }
     return url;
   }
