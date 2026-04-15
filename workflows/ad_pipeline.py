@@ -253,16 +253,19 @@ def run_pipeline(input_data, on_step=None):
             image_urls = []
         print(f"[PIPELINE] Generated {len(image_urls)} AI images")
 
-    # STEP 8 — VOICEOVER (generate first so we know the audio duration)
+    # STEP 8 — VOICEOVER WITH TIMESTAMPS (for synced captions)
     _step("Generating voiceover...")
     voiceover_url = None
     voiceover_duration = None
+    word_timestamps = None
     try:
-        from core.voiceover import get_voiceover_duration
-        voiceover_url = generate_voiceover(copy)
+        from core.voiceover import get_voiceover_duration, generate_voiceover_with_timestamps
+        voiceover_url, word_timestamps = generate_voiceover_with_timestamps(copy)
         if voiceover_url:
             voiceover_duration = get_voiceover_duration(voiceover_url)
             print(f"[PIPELINE] Voiceover duration: {voiceover_duration:.1f}s")
+            if word_timestamps:
+                print(f"[PIPELINE] Got {len(word_timestamps)} word timestamps for synced captions")
     except Exception:
         voiceover_url = None
 
@@ -283,7 +286,8 @@ def run_pipeline(input_data, on_step=None):
         video_url = assemble_video(image_urls, voiceover_url, copy,
                                    video_clip_urls=video_clip_urls if video_clip_urls else None,
                                    product_overlay_url=product_overlay,
-                                   user_video_urls=user_video_urls if has_user_videos else None)
+                                   user_video_urls=user_video_urls if has_user_videos else None,
+                                   word_timestamps=word_timestamps)
     except Exception:
         video_url = None
 

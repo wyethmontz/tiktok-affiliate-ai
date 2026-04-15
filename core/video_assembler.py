@@ -80,16 +80,21 @@ def _get_video_duration(video_path: str) -> float | None:
     return None
 
 
-def _build_caption_filter(text: str, total_duration: float) -> str:
+def _build_caption_filter(text: str, total_duration: float,
+                          word_timestamps: list[dict] | None = None) -> str:
     """
-    Build FFmpeg drawtext filter that shows captions in timed chunks,
-    TikTok-style: 3-5 words at a time, centered at bottom.
+    Build FFmpeg drawtext filter for TikTok-style captions.
+    If word_timestamps are provided, captions are synced to the voiceover.
+    Otherwise falls back to evenly-timed chunks.
     """
+    if word_timestamps:
+        return _build_synced_caption_filter(word_timestamps)
+
+    # Fallback: evenly-timed chunks
     words = text.split()
     if not words or total_duration <= 0:
         return ""
 
-    # Group into chunks of 3-4 words
     chunk_size = 3
     chunks = []
     for i in range(0, len(words), chunk_size):
@@ -117,10 +122,42 @@ def _build_caption_filter(text: str, total_duration: float) -> str:
     return ",".join(filters)
 
 
+def _build_synced_caption_filter(word_timestamps: list[dict]) -> str:
+    """
+    Build FFmpeg drawtext filter synced to actual voiceover word timings.
+    Groups 2-3 words together, timed exactly to when they're spoken.
+    """
+    if not word_timestamps:
+        return ""
+
+    # Group words into chunks of 2-3, using actual timestamps
+    chunk_size = 3
+    filters = []
+
+    for i in range(0, len(word_timestamps), chunk_size):
+        chunk_words = word_timestamps[i:i + chunk_size]
+        text = " ".join(w["word"] for w in chunk_words)
+        start_time = chunk_words[0]["start"]
+        end_time = chunk_words[-1]["end"] + 0.1  # tiny buffer
+
+        safe_text = text.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
+
+        filters.append(
+            f"drawtext=text='{safe_text}'"
+            f":fontsize=44:fontcolor=white"
+            f":borderw=3:bordercolor=black"
+            f":x=(w-text_w)/2:y=h-150"
+            f":enable='between(t,{start_time:.3f},{end_time:.3f})'"
+        )
+
+    return ",".join(filters)
+
+
 def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     video_clip_urls: list[str] | None = None,
                     product_overlay_url: str | None = None,
-                    user_video_urls: list[str] | None = None) -> str | None:
+                    user_video_urls: list[str] | None = None,
+                    word_timestamps: list[dict] | None = None) -> str | None:
     """
     Assemble a TikTok-ready MP4 from user video clips, AI video clips, or images + voiceover + captions.
     Priority: user_video_urls > video_clip_urls > image_urls (Ken Burns fallback).
@@ -296,7 +333,7 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
         script_text = _extract_script_text(copy)
         video_duration = _get_video_duration(final_path)
         if script_text and video_duration:
-            caption_filter = _build_caption_filter(script_text, video_duration)
+            caption_filter = _build_caption_filter(script_text, video_duration, word_timestamps=word_timestamps)
             if caption_filter:
                 captioned_path = os.path.join(tmpdir, "captioned.mp4")
                 caption_cmd = [
