@@ -27,6 +27,21 @@ def _extract_script_text(copy: str) -> str:
     return match.group(1).strip() if match else copy.strip()
 
 
+def _get_audio_duration(audio_path: str) -> float | None:
+    """Get duration of an audio file in seconds using ffprobe."""
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", audio_path],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return float(result.stdout.strip())
+    except Exception as e:
+        print(f"[VIDEO] Could not probe audio duration: {e}")
+    return None
+
+
 def _split_captions(text: str, num_scenes: int) -> list[str]:
     """Split script text into roughly equal parts for each scene."""
     words = text.split()
@@ -41,83 +56,157 @@ def _split_captions(text: str, num_scenes: int) -> list[str]:
     return captions
 
 
-def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str) -> str | None:
+def _get_video_duration(video_path: str) -> float | None:
+    """Get duration of a video file in seconds using ffprobe."""
+    try:
+        result = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", video_path],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return float(result.stdout.strip())
+    except Exception:
+        pass
+    return None
+
+
+def _build_caption_filter(text: str, total_duration: float) -> str:
     """
-    Assemble a TikTok-ready MP4 from images + voiceover + captions using FFmpeg.
+    Build FFmpeg drawtext filter that shows captions in timed chunks,
+    TikTok-style: 3-5 words at a time, centered at bottom.
+    """
+    words = text.split()
+    if not words or total_duration <= 0:
+        return ""
+
+    # Group into chunks of 3-4 words
+    chunk_size = 3
+    chunks = []
+    for i in range(0, len(words), chunk_size):
+        chunks.append(" ".join(words[i:i + chunk_size]))
+
+    if not chunks:
+        return ""
+
+    time_per_chunk = total_duration / len(chunks)
+    filters = []
+
+    for i, chunk in enumerate(chunks):
+        start_time = i * time_per_chunk
+        end_time = start_time + time_per_chunk
+        safe_chunk = chunk.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
+
+        filters.append(
+            f"drawtext=text='{safe_chunk}'"
+            f":fontsize=42:fontcolor=white"
+            f":borderw=3:bordercolor=black"
+            f":x=(w-text_w)/2:y=h-150"
+            f":enable='between(t,{start_time:.2f},{end_time:.2f})'"
+        )
+
+    return ",".join(filters)
+
+
+def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
+                    video_clip_urls: list[str] | None = None,
+                    product_overlay_url: str | None = None) -> str | None:
+    """
+    Assemble a TikTok-ready MP4 from video clips (or images) + voiceover + captions.
+    If video_clip_urls are provided, uses those directly (AI-generated motion video).
+    Otherwise falls back to static images with Ken Burns zoom.
+    If product_overlay_url is provided, overlays the product image in the last 3 seconds.
     Returns base64 data URI of the final video, or None on failure.
     """
-    if not image_urls:
-        print("[VIDEO] No images to assemble")
+    if not video_clip_urls and not image_urls:
+        print("[VIDEO] No video clips or images to assemble")
         return None
 
     tmpdir = tempfile.mkdtemp(prefix="tiktok_video_")
+    use_video_clips = bool(video_clip_urls)
 
     try:
-        # Download images
-        image_files = []
-        for i, url in enumerate(image_urls):
-            ext = ".webp" if "webp" in url else ".jpg"
-            img_path = os.path.join(tmpdir, f"img_{i}{ext}")
-            _download_file(url, img_path)
-            image_files.append(img_path)
-
         # Download voiceover if available
         audio_path = None
         if voiceover_data:
             audio_path = os.path.join(tmpdir, "voiceover.mp3")
             _download_file(voiceover_data, audio_path)
 
-        # Split script into captions per scene
-        script_text = _extract_script_text(copy)
-        captions = _split_captions(script_text, len(image_files))
-
-        # Generate individual scene clips with zoom effect and captions
         scene_clips = []
-        scene_duration = 6  # seconds per scene
 
-        for i, img_path in enumerate(image_files):
-            clip_path = os.path.join(tmpdir, f"scene_{i}.mp4")
-            caption = captions[i] if i < len(captions) else ""
+        if use_video_clips:
+            # === VIDEO CLIP MODE: download AI-generated video clips ===
+            print(f"[VIDEO] Using {len(video_clip_urls)} AI-generated video clips")
+            for i, url in enumerate(video_clip_urls):
+                clip_path = os.path.join(tmpdir, f"clip_{i}.mp4")
+                _download_file(url, clip_path)
 
-            # Escape special characters for FFmpeg drawtext
-            safe_caption = caption.replace("'", "'\\''").replace(":", "\\:")
+                # Normalize to consistent format for concat (re-encode to same codec/fps)
+                normalized_path = os.path.join(tmpdir, f"scene_{i}.mp4")
+                normalize_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", clip_path,
+                    "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    "-r", "25",
+                    "-an",  # strip original audio, we'll add voiceover
+                    normalized_path
+                ]
+                result = subprocess.run(normalize_cmd, capture_output=True, text=True, timeout=120)
+                if result.returncode != 0:
+                    print(f"[VIDEO] FFmpeg normalize clip {i} error: {result.stderr[-500:]}")
+                    continue
 
-            # Ken Burns zoom effect: slowly zoom in from 1.0x to 1.15x
-            zoom_filter = (
-                f"scale=1080:1920:force_original_aspect_ratio=increase,"
-                f"crop=1080:1920,"
-                f"zoompan=z='min(zoom+0.0025,1.15)':d={scene_duration * 25}:s=1080x1920:fps=25"
-            )
+                scene_clips.append(normalized_path)
+        else:
+            # === IMAGE MODE: static images with Ken Burns zoom (fallback) ===
+            print(f"[VIDEO] Using {len(image_urls)} static images (fallback mode)")
+            image_files = []
+            for i, url in enumerate(image_urls):
+                ext = ".webp" if "webp" in url else ".jpg"
+                img_path = os.path.join(tmpdir, f"img_{i}{ext}")
+                _download_file(url, img_path)
+                image_files.append(img_path)
 
-            # Caption filter: white text on semi-transparent dark bar at bottom
-            caption_filter = ""
-            if safe_caption:
-                caption_filter = (
-                    f",drawtext=text='{safe_caption}'"
-                    f":fontsize=32:fontcolor=white"
-                    f":borderw=2:bordercolor=black"
-                    f":x=(w-text_w)/2:y=h-120"
-                    f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            # Calculate scene duration from voiceover length
+            audio_duration = _get_audio_duration(audio_path) if audio_path else None
+            if audio_duration and len(image_files) > 0:
+                scene_duration = audio_duration / len(image_files)
+                print(f"[VIDEO] Voiceover is {audio_duration:.1f}s — {scene_duration:.1f}s per scene")
+            else:
+                scene_duration = 6
+                print(f"[VIDEO] No voiceover to sync — using {scene_duration}s per scene")
+
+            for i, img_path in enumerate(image_files):
+                clip_path = os.path.join(tmpdir, f"scene_{i}.mp4")
+
+                total_frames = int(scene_duration * 25)
+                zoom_step = 0.15 / max(total_frames, 1)
+                zoom_filter = (
+                    f"scale=1080:1920:force_original_aspect_ratio=increase,"
+                    f"crop=1080:1920,"
+                    f"zoompan=z='min(zoom+{zoom_step:.6f},1.15)':d={total_frames}:s=1080x1920:fps=25"
                 )
 
-            cmd = [
-                "ffmpeg", "-y",
-                "-loop", "1",
-                "-i", img_path,
-                "-vf", zoom_filter + caption_filter,
-                "-t", str(scene_duration),
-                "-c:v", "libx264",
-                "-pix_fmt", "yuv420p",
-                "-r", "25",
-                clip_path
-            ]
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-loop", "1",
+                    "-i", img_path,
+                    "-vf", zoom_filter,
+                    "-t", str(scene_duration),
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    "-r", "25",
+                    clip_path
+                ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-            if result.returncode != 0:
-                print(f"[VIDEO] FFmpeg scene {i} error: {result.stderr[-500:]}")
-                continue
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                if result.returncode != 0:
+                    print(f"[VIDEO] FFmpeg scene {i} error: {result.stderr[-500:]}")
+                    continue
 
-            scene_clips.append(clip_path)
+                scene_clips.append(clip_path)
 
         if not scene_clips:
             print("[VIDEO] No scene clips generated")
@@ -166,6 +255,63 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str)
                 final_path = concat_path
         else:
             final_path = concat_path
+
+        # Burn timed captions onto the video (TikTok-style word chunks)
+        script_text = _extract_script_text(copy)
+        video_duration = _get_video_duration(final_path)
+        if script_text and video_duration:
+            caption_filter = _build_caption_filter(script_text, video_duration)
+            if caption_filter:
+                captioned_path = os.path.join(tmpdir, "captioned.mp4")
+                caption_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", final_path,
+                    "-vf", caption_filter,
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    "-c:a", "copy",
+                    captioned_path
+                ]
+                result = subprocess.run(caption_cmd, capture_output=True, text=True, timeout=120)
+                if result.returncode == 0:
+                    final_path = captioned_path
+                    print(f"[VIDEO] Captions burned onto video")
+                else:
+                    print(f"[VIDEO] Caption burn failed, using video without captions: {result.stderr[-300:]}")
+
+        # Overlay product image in the last 3 seconds (CTA moment)
+        if product_overlay_url:
+            video_duration = _get_video_duration(final_path) or 0
+            if video_duration > 3:
+                overlay_start = video_duration - 3
+                product_img_path = os.path.join(tmpdir, "product_overlay.png")
+                try:
+                    _download_file(product_overlay_url, product_img_path)
+                    overlay_path = os.path.join(tmpdir, "with_overlay.mp4")
+                    # Product image: scaled to 280px wide, positioned top-right with padding
+                    overlay_filter = (
+                        f"[1:v]scale=280:-1[prod];"
+                        f"[0:v][prod]overlay=W-w-30:30"
+                        f":enable='between(t,{overlay_start:.2f},{video_duration:.2f})'"
+                    )
+                    overlay_cmd = [
+                        "ffmpeg", "-y",
+                        "-i", final_path,
+                        "-i", product_img_path,
+                        "-filter_complex", overlay_filter,
+                        "-c:v", "libx264",
+                        "-pix_fmt", "yuv420p",
+                        "-c:a", "copy",
+                        overlay_path
+                    ]
+                    result = subprocess.run(overlay_cmd, capture_output=True, text=True, timeout=120)
+                    if result.returncode == 0:
+                        final_path = overlay_path
+                        print(f"[VIDEO] Product overlay added at {overlay_start:.1f}s")
+                    else:
+                        print(f"[VIDEO] Product overlay failed: {result.stderr[-300:]}")
+                except Exception as e:
+                    print(f"[VIDEO] Product overlay error: {e}")
 
         # Read final video and return as base64 data URI
         with open(final_path, "rb") as f:

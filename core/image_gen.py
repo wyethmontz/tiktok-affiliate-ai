@@ -46,11 +46,15 @@ def _run_prediction(prompt: str) -> str | None:
     return None
 
 
-def generate_images(media_prompts: str, max_images: int = 4) -> list[str]:
+PRODUCT_PHOTO_MARKER = "PRODUCT_PHOTO"
+
+
+def generate_images(media_prompts: str, max_images: int = 4) -> list[str | None]:
     """
     Takes the numbered media prompts from the media agent,
     extracts individual prompts, and generates images via Flux on Replicate.
-    Returns a list of image URLs.
+    PRODUCT_PHOTO lines are returned as None (to be filled with real product images later).
+    Returns a list of image URLs (or None for product photo slots).
     """
     # Extract numbered prompts (e.g. "1. ...", "2. ...")
     lines = re.findall(r'\d+\.\s*(.+)', media_prompts)
@@ -65,12 +69,21 @@ def generate_images(media_prompts: str, max_images: int = 4) -> list[str]:
 
     image_urls = []
     for i, prompt in enumerate(lines):
+        # Skip product photo slots — will be filled with real images
+        if PRODUCT_PHOTO_MARKER in prompt.upper():
+            image_urls.append(None)
+            print(f"[IMAGE GEN] Scene {i + 1}: product photo slot (skipped)")
+            continue
+
         try:
-            if i > 0:
+            if i > 0 and image_urls and image_urls[-1] is not None:
                 time.sleep(5)  # Avoid rate limiting between requests
+            print(f"[IMAGE GEN] Scene {i + 1}: generating AI image...")
             url = _run_prediction(prompt)
             if url:
                 image_urls.append(url)
+            else:
+                image_urls.append(None)
         except Exception as e:
             # Retry once after a longer wait on rate limit
             if "429" in str(e):
@@ -80,10 +93,13 @@ def generate_images(media_prompts: str, max_images: int = 4) -> list[str]:
                     url = _run_prediction(prompt)
                     if url:
                         image_urls.append(url)
+                    else:
+                        image_urls.append(None)
                 except Exception as e2:
                     print(f"[IMAGE GEN ERROR] Retry failed: {e2}")
+                    image_urls.append(None)
             else:
                 print(f"[IMAGE GEN ERROR] {e}")
-            continue
+                image_urls.append(None)
 
     return image_urls

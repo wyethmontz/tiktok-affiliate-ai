@@ -58,9 +58,11 @@ User Input (product, audience, goal, affiliate_link)
    -> Compliance Agent  (checks for TikTok policy violations)
    -> Media Generator   (creates AI image prompts optimized for TikTok)
    -> Image Generator   (Flux via Replicate — generates actual images)
+   -> Video Generator   (Wan 2.5 I2V via Replicate — animates images into motion video)
    -> Voiceover         (ElevenLabs TTS — generates narration audio)
+   -> Video Assembler   (FFmpeg — stitches clips + voiceover into final MP4)
    -> Supabase          (saves everything)
-   -> Frontend          (displays results with audio player)
+   -> Frontend          (displays results with video player)
 ```
 
 ### TikTok AIGC Policy (Official — from support.tiktok.com)
@@ -110,6 +112,7 @@ Every generated ad MUST include:
 - `core/analytics.py` — Analytics queries
 - `core/auth.py` — JWT auth middleware (Supabase Auth)
 - `core/image_gen.py` — Replicate Flux API (image generation)
+- `core/video_gen.py` — Replicate Wan 2.5 I2V API (image-to-video animation)
 - `core/voiceover.py` — ElevenLabs TTS API (voiceover generation)
 - `workflows/ad_pipeline.py` — 10-step pipeline orchestration
 

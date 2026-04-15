@@ -9,6 +9,7 @@ from agents.compliance import run_compliance
 from agents.optimizer import run_optimizer
 from core.db import save_ad
 from core.image_gen import generate_images
+from core.video_gen import generate_video_clips
 from core.voiceover import generate_voiceover
 from core.llm import call_claude
 from core.video_assembler import assemble_video
@@ -36,7 +37,7 @@ RULES:
 - Remove any fake urgency
 - Make sure CTA includes #ad disclosure
 - Only describe what the product actually does based on the product name
-- Keep it 60-100 words, same TikTok style
+- Keep it 40-50 words ONLY, same TikTok style (must fit a 20-second video)
 
 Return in this format:
 
@@ -93,10 +94,14 @@ def run_pipeline(input_data, on_step=None):
     copy = run_copywriter(copywriter_input)
 
     # STEP 4 — CREATIVE DIRECTOR
+    product_image_urls = input_data.get("product_image_urls", [])
+    has_product_images = bool(product_image_urls)
+
     _step("Planning visual scenes...")
     creative = run_creative({
         "script": copy,
         "tiktok_format": strategy.get("tiktok_format", ""),
+        "has_product_images": has_product_images,
     })
 
     # STEP 5 — COMPLIANCE CHECK + AUTO-FIX LOOP
@@ -128,6 +133,7 @@ def run_pipeline(input_data, on_step=None):
             creative = run_creative({
                 "script": copy,
                 "tiktok_format": strategy.get("tiktok_format", ""),
+                "has_product_images": has_product_images,
             })
         else:
             print(f"[COMPLIANCE] Still failing after {MAX_COMPLIANCE_RETRIES} retries — saving with FAIL status")
@@ -141,37 +147,69 @@ def run_pipeline(input_data, on_step=None):
     # STEP 7 — MEDIA PROMPTS
     _step("Creating image prompts...")
     media = run_media({
-        "scenes": creative
+        "scenes": creative,
+        "has_product_images": has_product_images,
     })
 
-    # STEP 8 — IMAGE GENERATION (or use provided product images)
-    product_image_urls = input_data.get("product_image_urls", [])
-
-    if product_image_urls:
-        _step("Using provided product images...")
-        image_urls = product_image_urls
-    else:
-        _step("Generating TikTok images...")
-        try:
-            image_urls = generate_images(media)
-        except Exception:
-            image_urls = []
-
-    # STEP 9 — VOICEOVER
-    _step("Generating voiceover...")
+    # STEP 8 — IMAGE GENERATION + PRODUCT PHOTO INTERLEAVING
+    _step("Generating images...")
     try:
+        image_urls = generate_images(media)
+    except Exception:
+        image_urls = []
+
+    # Fill in product photo slots (None values) with real product images
+    if has_product_images and image_urls:
+        product_idx = 0
+        for i, url in enumerate(image_urls):
+            if url is None and product_idx < len(product_image_urls):
+                image_urls[i] = product_image_urls[product_idx]
+                product_idx = (product_idx + 1) % len(product_image_urls)
+                print(f"[PIPELINE] Scene {i + 1}: using real product photo")
+            elif url is None:
+                # No product images left, remove the slot
+                print(f"[PIPELINE] Scene {i + 1}: no product photo available, skipping")
+
+        # Remove any remaining None values
+        image_urls = [url for url in image_urls if url is not None]
+        print(f"[PIPELINE] Final scene layout: {len(image_urls)} images ({len(product_image_urls)} product + AI)")
+
+    # STEP 9 — VOICEOVER (generate first so we know the audio duration)
+    _step("Generating voiceover...")
+    voiceover_url = None
+    voiceover_duration = None
+    try:
+        from core.voiceover import get_voiceover_duration
         voiceover_url = generate_voiceover(copy)
+        if voiceover_url:
+            voiceover_duration = get_voiceover_duration(voiceover_url)
+            print(f"[PIPELINE] Voiceover duration: {voiceover_duration:.1f}s")
     except Exception:
         voiceover_url = None
 
-    # STEP 10 — VIDEO ASSEMBLY (FFmpeg: images + voiceover + captions → MP4)
+    # STEP 10 — VIDEO CLIP GENERATION (animate images, match voiceover duration)
+    video_clip_urls = []
+    if image_urls:
+        _step("Generating motion video clips...")
+        try:
+            video_clip_urls = generate_video_clips(image_urls, media,
+                                                   target_duration=voiceover_duration)
+            print(f"[PIPELINE] Generated {len(video_clip_urls)}/{len(image_urls)} video clips")
+        except Exception:
+            video_clip_urls = []
+
+    # STEP 11 — VIDEO ASSEMBLY (FFmpeg: video clips + voiceover + product overlay → MP4)
     _step("Assembling TikTok video...")
+    # Use first product image as the CTA overlay in the last 3 seconds
+    product_overlay = product_image_urls[0] if product_image_urls else None
     try:
-        video_url = assemble_video(image_urls, voiceover_url, copy)
+        video_url = assemble_video(image_urls, voiceover_url, copy,
+                                   video_clip_urls=video_clip_urls if video_clip_urls else None,
+                                   product_overlay_url=product_overlay)
     except Exception:
         video_url = None
 
-    # STEP 11 — GENERATE TIKTOK CAPTION
+    # STEP 12 — GENERATE TIKTOK CAPTION
     _step("Creating TikTok caption...")
     # Extract CTA and hashtags from copy
     cta_match = re.search(r'CTA:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
@@ -185,7 +223,7 @@ def run_pipeline(input_data, on_step=None):
         hashtags = "#ad " + hashtags
     tiktok_caption = f"{cta_text}\n\n{hashtags}".strip()
 
-    # STEP 12 — SAVE TO SUPABASE
+    # STEP 13 — SAVE TO SUPABASE
     _step("Saving to database...")
 
     score_match = re.search(r'\d+', qa or "")

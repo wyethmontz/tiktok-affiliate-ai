@@ -23,7 +23,7 @@ Requirements:
 - Write the ENTIRE script in {language} (natural spoken Tagalog, not formal/textbook)
 - Open with a scroll-stopping hook (first 2 seconds are everything)
 - Write in first-person, conversational TikTok voice — parang kwento sa kaibigan
-- Keep it 60-100 words MAX (TikTok is 15-30 seconds)
+- STRICT: Keep the SCRIPT section to 40-50 words ONLY (this will be read aloud over a 20-second video — longer scripts will get cut off)
 - Match the TikTok format style (GRWM, storytime, POV, etc.)
 - End with a CTA that includes affiliate disclosure
 - Do NOT invent specific prices, statistics, percentages, or claims
@@ -39,7 +39,7 @@ COMPLIANCE (REQUIRED):
 Return in this format:
 
 SCRIPT:
-[the full TikTok script in {language} — short, punchy, authentic]
+[the full TikTok script in {language} — 40-50 words ONLY, short, punchy, authentic]
 
 CTA:
 [call-to-action in {language} with affiliate disclosure, e.g. "Link sa bio ko #ad #TikTokShop"]
