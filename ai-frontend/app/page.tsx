@@ -87,10 +87,10 @@ export default function Home() {
   }
 
   function getPreviewUrl(url: string): string {
-    // Google Drive → thumbnail for preview
+    // Google Drive → use direct download as preview
     const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
     if (driveMatch) {
-      return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w400`;
+      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
     }
     return url;
   }
