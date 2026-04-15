@@ -244,44 +244,34 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
 
             # Calculate scene duration from voiceover length
             audio_duration = _get_audio_duration(audio_path) if audio_path else None
-            crossfade_dur = 0.4  # crossfade overlap between scenes
             num_scenes = len(image_files)
             if audio_duration and num_scenes > 0:
-                # Account for crossfade overlaps in total duration
-                total_crossfade = crossfade_dur * max(num_scenes - 1, 0)
-                scene_duration = (audio_duration + total_crossfade) / num_scenes
-                print(f"[VIDEO] Voiceover is {audio_duration:.1f}s — {scene_duration:.1f}s per scene (with {crossfade_dur}s crossfades)")
+                scene_duration = audio_duration / num_scenes
+                print(f"[VIDEO] Voiceover is {audio_duration:.1f}s — {scene_duration:.1f}s per scene")
             else:
-                scene_duration = 5
+                scene_duration = 4
                 print(f"[VIDEO] No voiceover to sync — using {scene_duration}s per scene")
 
-            # Different motion effect per scene for variety
-            # All effects use safe zoom/pan ranges to avoid edge artifacts
-            # Input is scaled to 1440x2560 (1.33x of 1080x1920) for headroom
-            motion_effects = [
-                # Scene 1: Slow zoom in
-                "zoompan=z='1.0+on/{d}*0.12':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
-                # Scene 2: Slow pan left to right (small range)
-                "zoompan=z='1.08':x='iw/2-(iw/zoom/2)+(on/{d})*40':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
-                # Scene 3: Slow zoom out
-                "zoompan=z='1.12-on/{d}*0.08':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
-                # Scene 4: Slow pan right to left (small range)
-                "zoompan=z='1.08':x='iw/2-(iw/zoom/2)-(on/{d})*40':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
-            ]
-
+            # Simple, reliable motion: scale up, crop center, apply gentle zoom
+            # No panning (avoids edge artifacts), just centered zoom in/out
             for i, img_path in enumerate(image_files):
                 clip_path = os.path.join(tmpdir, f"scene_{i}.mp4")
                 total_frames = int(scene_duration * 25)
 
-                # Pick motion effect (cycle through them)
-                motion_template = motion_effects[i % len(motion_effects)]
-                motion_filter = motion_template.format(d=total_frames)
+                # Alternate between zoom-in and zoom-out per scene
+                if i % 2 == 0:
+                    # Zoom in: 1.0 → 1.1
+                    zoom_expr = f"1.0+(on/{total_frames})*0.1"
+                else:
+                    # Zoom out: 1.1 → 1.0
+                    zoom_expr = f"1.1-(on/{total_frames})*0.1"
 
-                # Scale larger than output to give zoompan headroom (no edge artifacts)
                 vf = (
-                    f"scale=1440:2560:force_original_aspect_ratio=increase,"
-                    f"crop=1440:2560,"
-                    f"{motion_filter}"
+                    f"scale=2160:3840:force_original_aspect_ratio=increase,"
+                    f"crop=2160:3840,"
+                    f"zoompan=z='{zoom_expr}'"
+                    f":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                    f":d={total_frames}:s=1080x1920:fps=25"
                 )
 
                 cmd = [
@@ -302,56 +292,32 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     continue
 
                 scene_clips.append(clip_path)
-                print(f"[VIDEO] Scene {i + 1}: {['zoom-in', 'pan-right', 'zoom-out', 'pan-left'][i % 4]}")
+                print(f"[VIDEO] Scene {i + 1}: {'zoom-in' if i % 2 == 0 else 'zoom-out'}")
 
         if not scene_clips:
             print("[VIDEO] No scene clips generated")
             return None
 
-        # Concatenate with crossfade transitions between scenes
-        if len(scene_clips) == 1:
-            concat_path = scene_clips[0]
-        elif len(scene_clips) >= 2:
-            # Build FFmpeg crossfade chain
-            # For N clips: apply N-1 crossfade filters
-            current = scene_clips[0]
-            for i in range(1, len(scene_clips)):
-                xfade_path = os.path.join(tmpdir, f"xfade_{i}.mp4")
-                offset = scene_duration - crossfade_dur
-                if offset < 0.5:
-                    offset = 0.5
+        # Simple concat — no crossfades (they cause duration mismatch)
+        concat_file = os.path.join(tmpdir, "concat.txt")
+        with open(concat_file, "w") as f:
+            for clip in scene_clips:
+                f.write(f"file '{clip}'\n")
 
-                xfade_cmd = [
-                    "ffmpeg", "-y",
-                    "-i", current,
-                    "-i", scene_clips[i],
-                    "-filter_complex",
-                    f"xfade=transition=fadeblack:duration={crossfade_dur}:offset={offset:.2f}",
-                    "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p",
-                    xfade_path
-                ]
-                result = subprocess.run(xfade_cmd, capture_output=True, text=True, timeout=120)
-                if result.returncode != 0:
-                    print(f"[VIDEO] Crossfade {i} failed: {result.stderr[-300:]}")
-                    # Fallback: simple concat without transition
-                    concat_file = os.path.join(tmpdir, "concat.txt")
-                    with open(concat_file, "w") as f:
-                        for clip in scene_clips:
-                            f.write(f"file '{clip}'\n")
-                    xfade_path = os.path.join(tmpdir, "concat_fallback.mp4")
-                    subprocess.run([
-                        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-                        "-i", concat_file, "-c", "copy", xfade_path
-                    ], capture_output=True, text=True, timeout=60)
-                    current = xfade_path
-                    break
-                current = xfade_path
-
-            concat_path = current
-            print(f"[VIDEO] Applied crossfade transitions between {len(scene_clips)} scenes")
-        else:
-            concat_path = scene_clips[0]
+        concat_path = os.path.join(tmpdir, "concat.mp4")
+        concat_cmd = [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", concat_file,
+            "-c", "copy",
+            concat_path
+        ]
+        result = subprocess.run(concat_cmd, capture_output=True, text=True, timeout=60)
+        if result.returncode != 0:
+            print(f"[VIDEO] FFmpeg concat error: {result.stderr[-500:]}")
+            return None
+        print(f"[VIDEO] Concatenated {len(scene_clips)} scenes")
 
         # Overlay voiceover audio if available
         final_path = os.path.join(tmpdir, "final.mp4")
