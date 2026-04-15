@@ -46,7 +46,7 @@ RULES:
 - Remove any fake urgency
 - Make sure CTA includes #ad disclosure
 - Only describe what the product actually does based on the product name
-- Keep it 40-50 words ONLY, same TikTok style (must fit a 20-second video)
+- Keep it 30-40 words MAXIMUM (must fit a 14-second video, count your words)
 
 Return in this format:
 
@@ -75,7 +75,7 @@ STRICT RULES (every previous script broke these — do NOT repeat):
 - ONLY describe what the product IS based on its name — nothing more
 - CTA MUST include #ad
 - Keep it simple: show excitement about the product without lying
-- 40-50 words ONLY in Tagalog (natural spoken, not formal)
+- 30-40 words MAXIMUM in Tagalog (natural spoken, not formal — count your words)
 
 Write something safe and simple — better to be boring and compliant than creative and flagged.
 
