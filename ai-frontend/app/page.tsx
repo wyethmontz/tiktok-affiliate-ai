@@ -5,12 +5,7 @@ import axios from "axios";
 import { API_URL } from "../lib/api";
 
 export default function Home() {
-  const [form, setForm] = useState({
-    product: "",
-    audience: "",
-    goal: "",
-    affiliate_link: "",
-  });
+  const [product, setProduct] = useState("");
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -29,17 +24,10 @@ export default function Home() {
     const saved = localStorage.getItem("reuse_ad");
     if (saved) {
       const data = JSON.parse(saved);
-      setForm((prev) => ({
-        ...prev,
-        product: data.product || "",
-      }));
+      setProduct(data.product || "");
       localStorage.removeItem("reuse_ad");
     }
   }, []);
-
-  function updateField(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  }
 
   async function uploadFiles(files: FileList | File[]) {
     const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
@@ -152,7 +140,7 @@ export default function Home() {
 
     try {
       const res = await axios.post(`${API_URL}/generate-ad`, {
-        ...form,
+        product: product,
         product_image_urls: filteredUrls,
       });
       await pollJob(res.data.job_id);
@@ -174,35 +162,13 @@ export default function Home() {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-2">TikTok Ad Generator</h1>
-      <p className="text-gray-400 mb-8">Create TikTok-compliant affiliate content with AI</p>
+      <p className="text-gray-400 mb-8">Drop your product + images, AI handles the rest</p>
 
       <div className="flex flex-col gap-4 mb-6">
         <input
-          name="product"
-          placeholder="Product (e.g. Lip Tint, LED Mirror)"
-          value={form.product}
-          onChange={updateField}
-          className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500"
-        />
-        <input
-          name="audience"
-          placeholder="Audience (e.g. Gen Z women in school)"
-          value={form.audience}
-          onChange={updateField}
-          className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500"
-        />
-        <input
-          name="goal"
-          placeholder="Goal (e.g. Drive affiliate sales)"
-          value={form.goal}
-          onChange={updateField}
-          className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500"
-        />
-        <input
-          name="affiliate_link"
-          placeholder="Affiliate link (optional)"
-          value={form.affiliate_link}
-          onChange={updateField}
+          placeholder="What are you promoting? (e.g. Cute LED Night Light, Lip Tint Set)"
+          value={product}
+          onChange={(e) => setProduct(e.target.value)}
           className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500"
         />
 
@@ -301,7 +267,7 @@ export default function Home() {
 
         <button
           onClick={generateAd}
-          disabled={loading}
+          disabled={loading || !product.trim()}
           className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         >
           {loading ? "Generating..." : "Generate TikTok Ad"}

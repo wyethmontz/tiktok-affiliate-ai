@@ -84,11 +84,17 @@ def run_pipeline(input_data, on_step=None):
         print("Cleaned output was:", cleaned)
         return {"error": "AI did not return valid JSON", "raw": strategy_raw}
 
+    # Use auto-detected audience/goal if user didn't provide them
+    audience = input_data.get("audience", "") or strategy.get("auto_audience", "TikTok users")
+    goal = input_data.get("goal", "") or strategy.get("auto_goal", "Boost engagement and drive clicks")
+    print(f"[PIPELINE] Audience: {audience}")
+    print(f"[PIPELINE] Goal: {goal}")
+
     # STEP 3 — COPYWRITER
     _step("Writing TikTok script...")
     copywriter_input = {
         **strategy,
-        "audience": input_data.get("audience", ""),
+        "audience": audience,
         "product": input_data["product"],
     }
     copy = run_copywriter(copywriter_input)
@@ -105,7 +111,7 @@ def run_pipeline(input_data, on_step=None):
     })
 
     # STEP 5 — COMPLIANCE CHECK + AUTO-FIX LOOP
-    original_input_str = f"Product: {input_data['product']}, Audience: {input_data.get('audience', '')}, Goal: {input_data.get('goal', '')}"
+    original_input_str = f"Product: {input_data['product']}, Audience: {audience}, Goal: {goal}"
     compliance_status = "FAIL"
 
     for attempt in range(1, MAX_COMPLIANCE_RETRIES + 2):  # 1 initial + 2 retries
@@ -144,35 +150,29 @@ def run_pipeline(input_data, on_step=None):
         "content": creative
     })
 
-    # STEP 7 — MEDIA PROMPTS
-    _step("Creating image prompts...")
-    media = run_media({
-        "scenes": creative,
-        "has_product_images": has_product_images,
-    })
+    # STEP 7 & 8 — IMAGES
+    media = ""
+    if has_product_images:
+        # Use product images directly — no AI image generation needed
+        _step("Using your product images...")
+        image_urls = product_image_urls
+        print(f"[PIPELINE] Using {len(image_urls)} product images directly")
+    else:
+        # Generate AI images
+        _step("Creating image prompts...")
+        media = run_media({
+            "scenes": creative,
+            "has_product_images": False,
+        })
 
-    # STEP 8 — IMAGE GENERATION + PRODUCT PHOTO INTERLEAVING
-    _step("Generating images...")
-    try:
-        image_urls = generate_images(media)
-    except Exception:
-        image_urls = []
-
-    # Fill in product photo slots (None values) with real product images
-    if has_product_images and image_urls:
-        product_idx = 0
-        for i, url in enumerate(image_urls):
-            if url is None and product_idx < len(product_image_urls):
-                image_urls[i] = product_image_urls[product_idx]
-                product_idx = (product_idx + 1) % len(product_image_urls)
-                print(f"[PIPELINE] Scene {i + 1}: using real product photo")
-            elif url is None:
-                # No product images left, remove the slot
-                print(f"[PIPELINE] Scene {i + 1}: no product photo available, skipping")
-
-        # Remove any remaining None values
-        image_urls = [url for url in image_urls if url is not None]
-        print(f"[PIPELINE] Final scene layout: {len(image_urls)} images ({len(product_image_urls)} product + AI)")
+        _step("Generating TikTok images...")
+        try:
+            image_urls = generate_images(media)
+            # Remove any None values from failed generations
+            image_urls = [url for url in image_urls if url is not None]
+        except Exception:
+            image_urls = []
+        print(f"[PIPELINE] Generated {len(image_urls)} AI images")
 
     # STEP 9 — VOICEOVER (generate first so we know the audio duration)
     _step("Generating voiceover...")
@@ -231,9 +231,9 @@ def run_pipeline(input_data, on_step=None):
 
     final_payload = {
         "product": input_data["product"],
-        "audience": input_data.get("audience", ""),
+        "audience": audience,
         "platform": "TikTok",
-        "goal": input_data.get("goal", ""),
+        "goal": goal,
         "hook": strategy.get("hook", ""),
         "angle": strategy.get("angle", ""),
         "positioning": strategy.get("positioning", ""),
