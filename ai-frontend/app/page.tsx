@@ -87,10 +87,10 @@ export default function Home() {
   }
 
   function getPreviewUrl(url: string): string {
-    // Google Drive → use direct download as preview
+    // Google Drive → use direct download as preview with cache-buster
     const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
     if (driveMatch) {
-      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}&t=${Date.now()}`;
     }
     return url;
   }
