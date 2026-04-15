@@ -7,7 +7,7 @@ from agents.qa import run_qa
 from agents.media import run_media
 from agents.compliance import run_compliance
 from agents.optimizer import run_optimizer
-from core.db import save_ad
+from core.db import save_ad, supabase
 from core.image_gen import generate_images
 from core.product_scenes import generate_product_scenes
 from core.policy_checker import get_latest_rules
@@ -114,7 +114,19 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         insights = None
 
-    # STEP 1 — STRATEGIST
+    # Fetch past scripts for this product to avoid duplicates
+    past_hooks = []
+    try:
+        past_ads = supabase.table("ads").select("hook,copy").ilike(
+            "product", f"%{input_data['product']}%"
+        ).order("created_at", desc=True).limit(5).execute().data
+        past_hooks = [a.get("hook", "") for a in past_ads if a.get("hook")]
+        if past_hooks:
+            print(f"[PIPELINE] Found {len(past_hooks)} past ads for this product — will avoid duplicate hooks")
+    except Exception:
+        pass
+
+    # STEP 2 — STRATEGIST
     _step("Creating TikTok strategy...")
     strategy_raw = run_strategist(input_data, insights=insights)
 
@@ -143,6 +155,7 @@ def run_pipeline(input_data, on_step=None):
         **strategy,
         "audience": audience,
         "product": input_data["product"],
+        "past_hooks": past_hooks,
     }
     copy = run_copywriter(copywriter_input)
 

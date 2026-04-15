@@ -7,11 +7,22 @@ def run_copywriter(input_data):
     product = input_data.get("product", "")
     tiktok_format = input_data.get("tiktok_format", "")
     language = input_data.get("language", "Tagalog")
+    past_hooks = input_data.get("past_hooks", [])
+
+    dedup_block = ""
+    if past_hooks:
+        hooks_list = "\n".join(f"- {h}" for h in past_hooks)
+        dedup_block = f"""
+IMPORTANT — These hooks were already used for this product. Write something COMPLETELY DIFFERENT:
+{hooks_list}
+
+Do NOT reuse the same opening line, angle, or structure as any of the above.
+"""
 
     prompt = f"""You are a Filipino TikTok content creator who makes viral affiliate content. You sound authentic, natural, and relatable — like a real Pinoy/Pinay talking to friends.
 
 Write a TikTok script in {language} for an affiliate product promotion.
-
+{dedup_block}
 PRODUCT: {product}
 AUDIENCE: {audience}
 HOOK: {hook}
