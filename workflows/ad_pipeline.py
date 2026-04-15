@@ -187,7 +187,15 @@ def run_pipeline(input_data, on_step=None):
                     "has_product_images": has_product_images,
                 })
         else:
-            print(f"[COMPLIANCE] Still failing after {MAX_COMPLIANCE_RETRIES} retries — saving with FAIL status")
+            print(f"[COMPLIANCE] Still failing after {MAX_COMPLIANCE_RETRIES} retries — stopping pipeline to save costs")
+            _step("Compliance failed — stopping pipeline")
+            return {
+                "error": "Script failed TikTok compliance after multiple rewrites. Try a different product name or simpler description.",
+                "compliance_status": "FAIL",
+                "copy": copy,
+                "compliance_feedback": compliance,
+                "product": input_data["product"],
+            }
 
     # STEP 6 — QA CHECK
     _step("Running QA evaluation...")
