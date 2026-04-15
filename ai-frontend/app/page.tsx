@@ -87,10 +87,10 @@ export default function Home() {
   }
 
   function getPreviewUrl(url: string): string {
-    // Google Drive → use direct download as preview with cache-buster
+    // Google Drive → use lh3 thumbnail proxy (works without auth)
     const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
     if (driveMatch) {
-      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}&t=${Date.now()}`;
+      return `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w400`;
     }
     return url;
   }
