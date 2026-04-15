@@ -10,6 +10,14 @@ REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 REPLICATE_VIDEO_URL = "https://api.replicate.com/v1/models/wan-video/wan-2.5-i2v/predictions"
 
 
+def _convert_gdrive_url(url: str) -> str:
+    """Convert Google Drive share links to direct download URLs."""
+    match = re.search(r'drive\.google\.com/file/d/([^/]+)', url)
+    if match:
+        return f"https://drive.google.com/uc?export=download&id={match.group(1)}"
+    return url
+
+
 def _seconds_to_frames(seconds: float, fps: int = 16) -> int:
     """Convert target duration to frame count. Wan 2.5 supports 1-81 frames at 16fps."""
     frames = int(seconds * fps)
@@ -22,6 +30,7 @@ def _run_video_prediction(image_url: str, prompt: str, num_frames: int = 81) -> 
         "Authorization": f"Bearer {REPLICATE_API_TOKEN}",
         "Content-Type": "application/json",
     }
+    image_url = _convert_gdrive_url(image_url)
     body = {
         "input": {
             "image": image_url,

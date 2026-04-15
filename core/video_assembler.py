@@ -6,6 +6,14 @@ import subprocess
 import httpx
 
 
+def _convert_gdrive_url(url: str) -> str:
+    """Convert Google Drive share links to direct download URLs."""
+    match = re.search(r'drive\.google\.com/file/d/([^/]+)', url)
+    if match:
+        return f"https://drive.google.com/uc?export=download&id={match.group(1)}"
+    return url
+
+
 def _download_file(url: str, dest: str):
     """Download a URL to a local file."""
     if url.startswith("data:"):
@@ -14,7 +22,8 @@ def _download_file(url: str, dest: str):
         with open(dest, "wb") as f:
             f.write(base64.b64decode(data))
     else:
-        with httpx.Client(timeout=30) as client:
+        url = _convert_gdrive_url(url)
+        with httpx.Client(timeout=30, follow_redirects=True) as client:
             res = client.get(url)
             res.raise_for_status()
             with open(dest, "wb") as f:

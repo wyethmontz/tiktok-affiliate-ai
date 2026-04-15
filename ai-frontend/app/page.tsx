@@ -16,6 +16,7 @@ export default function Home() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [showImageInputs, setShowImageInputs] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState("");
   const [result, setResult] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("");
@@ -81,6 +82,36 @@ export default function Home() {
       uploadFiles(e.target.files);
       e.target.value = "";
     }
+  }
+
+  function convertImageUrl(url: string): string {
+    // Google Drive share link → direct download
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (driveMatch) {
+      return `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+    }
+    return url;
+  }
+
+  function getPreviewUrl(url: string): string {
+    // Google Drive → thumbnail for preview
+    const driveMatch = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+    if (driveMatch) {
+      return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w400`;
+    }
+    return url;
+  }
+
+  function addImageUrl() {
+    const url = pasteUrl.trim();
+    if (!url || imageUrls.length >= 4) return;
+
+    const directUrl = convertImageUrl(url);
+    const previewUrl = getPreviewUrl(url);
+
+    setImageUrls(prev => [...prev, directUrl]);
+    setImagePreviews(prev => [...prev, previewUrl]);
+    setPasteUrl("");
   }
 
   async function pollJob(jobId: string) {
@@ -188,8 +219,29 @@ export default function Home() {
           {showImageInputs && (
             <div className="mt-3 flex flex-col gap-3">
               <p className="text-xs text-gray-500">
-                Drop product photos here — real images build buyer trust and drive sales.
+                Drop photos, browse files, or paste a Google Drive / image link.
               </p>
+
+              {/* URL paste input */}
+              {imageUrls.length < 4 && (
+                <div className="flex gap-2">
+                  <input
+                    placeholder="Paste image URL or Google Drive link"
+                    value={pasteUrl}
+                    onChange={(e) => setPasteUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addImageUrl()}
+                    className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-pink-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={addImageUrl}
+                    disabled={!pasteUrl.trim()}
+                    className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-700 text-white text-sm px-4 rounded-lg transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              )}
 
               {/* Drop zone */}
               {imageUrls.length < 4 && (
@@ -198,7 +250,7 @@ export default function Home() {
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
                   onClick={() => document.getElementById("file-input")?.click()}
-                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
                     dragOver
                       ? "border-pink-500 bg-pink-500/10"
                       : "border-gray-600 hover:border-gray-500 bg-gray-800/50"
@@ -215,14 +267,9 @@ export default function Home() {
                   {uploading ? (
                     <p className="text-pink-400 text-sm">Uploading...</p>
                   ) : (
-                    <>
-                      <p className="text-gray-400 text-sm">
-                        Drag & drop product images here
-                      </p>
-                      <p className="text-gray-500 text-xs mt-1">
-                        or click to browse (max 4 images, 5MB each)
-                      </p>
-                    </>
+                    <p className="text-gray-400 text-sm">
+                      Drag & drop images here or click to browse
+                    </p>
                   )}
                 </div>
               )}
