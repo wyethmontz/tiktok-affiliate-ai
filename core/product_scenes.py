@@ -92,8 +92,8 @@ def _run_kontext(image_data_uri: str, prompt: str) -> str | None:
             "prompt": prompt,
             "input_image": image_data_uri,
             "aspect_ratio": "9:16",
-            "output_format": "webp",
-            "output_quality": 80,
+            "output_format": "jpg",
+            "output_quality": 90,
             "num_inference_steps": 28,
             "guidance": 2.5,
         }
