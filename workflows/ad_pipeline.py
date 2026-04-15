@@ -285,10 +285,11 @@ def run_pipeline(input_data, on_step=None):
     hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
     cta_text = cta_match.group(1).strip() if cta_match else ""
     hashtags = hashtag_match.group(1).strip() if hashtag_match else "#ad #TikTokShop #fyp"
-    # Ensure AIGC disclosure is in hashtags
-    if "#AIgenerated" not in hashtags.lower().replace(" ", ""):
+    # Ensure AIGC disclosure is in hashtags (avoid duplicates)
+    hashtags_lower = hashtags.lower()
+    if "#aigenerated" not in hashtags_lower:
         hashtags = hashtags.rstrip() + " #AIgenerated"
-    if "#ad" not in hashtags.lower():
+    if "#ad" not in hashtags_lower:
         hashtags = "#ad " + hashtags
     tiktok_caption = f"{cta_text}\n\n{hashtags}".strip()
 
