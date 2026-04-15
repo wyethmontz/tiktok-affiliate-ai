@@ -290,7 +290,8 @@ def run_pipeline(input_data, on_step=None):
                                    video_clip_urls=video_clip_urls if video_clip_urls else None,
                                    product_overlay_url=product_overlay,
                                    user_video_urls=user_video_urls if has_user_videos else None,
-                                   word_timestamps=word_timestamps)
+                                   word_timestamps=word_timestamps,
+                                   bgm_style=input_data.get("bgm_style", "lofi"))
     except Exception:
         video_url = None
 

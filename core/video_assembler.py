@@ -4,6 +4,7 @@ import base64
 import tempfile
 import subprocess
 import httpx
+from core.bgm import generate_bgm
 
 
 def _convert_gdrive_url(url: str) -> str:
@@ -163,7 +164,8 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     video_clip_urls: list[str] | None = None,
                     product_overlay_url: str | None = None,
                     user_video_urls: list[str] | None = None,
-                    word_timestamps: list[dict] | None = None) -> str | None:
+                    word_timestamps: list[dict] | None = None,
+                    bgm_style: str = "lofi") -> str | None:
     """
     Assemble a TikTok-ready MP4 from user video clips, AI video clips, or images + voiceover + captions.
     Priority: user_video_urls > video_clip_urls > image_urls (Ken Burns fallback).
@@ -325,14 +327,25 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
             return None
         print(f"[VIDEO] Concatenated {len(scene_clips)} scenes")
 
-        # Overlay voiceover audio if available
+        # Generate background music
+        video_len = _get_video_duration(concat_path) or 15
+        bgm_path = os.path.join(tmpdir, "bgm.aac")
+        has_bgm = generate_bgm(video_len, bgm_path, style=bgm_style)
+
+        # Mix voiceover + background music onto video
         final_path = os.path.join(tmpdir, "final.mp4")
 
-        if audio_path and os.path.exists(audio_path):
+        if audio_path and os.path.exists(audio_path) and has_bgm:
+            # Mix voiceover (full volume) + BGM (low volume) together
             audio_cmd = [
                 "ffmpeg", "-y",
                 "-i", concat_path,
                 "-i", audio_path,
+                "-i", bgm_path,
+                "-filter_complex",
+                "[1:a]volume=1.0[voice];[2:a]volume=0.15[music];[voice][music]amix=inputs=2:duration=shortest[out]",
+                "-map", "0:v",
+                "-map", "[out]",
                 "-c:v", "copy",
                 "-c:a", "aac",
                 "-b:a", "128k",
@@ -341,8 +354,38 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
             ]
             result = subprocess.run(audio_cmd, capture_output=True, text=True, timeout=60)
             if result.returncode != 0:
-                print(f"[VIDEO] FFmpeg audio overlay error: {result.stderr[-500:]}")
-                # Fall back to video without audio
+                print(f"[VIDEO] BGM mix failed, trying voiceover only: {result.stderr[-300:]}")
+                # Fallback: voiceover only
+                audio_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", concat_path, "-i", audio_path,
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
+                    final_path
+                ]
+                subprocess.run(audio_cmd, capture_output=True, text=True, timeout=60)
+            else:
+                print(f"[VIDEO] Mixed voiceover + {bgm_style} background music")
+        elif audio_path and os.path.exists(audio_path):
+            # Voiceover only (no BGM)
+            audio_cmd = [
+                "ffmpeg", "-y",
+                "-i", concat_path, "-i", audio_path,
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
+                final_path
+            ]
+            result = subprocess.run(audio_cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode != 0:
+                final_path = concat_path
+        elif has_bgm:
+            # BGM only (no voiceover)
+            audio_cmd = [
+                "ffmpeg", "-y",
+                "-i", concat_path, "-i", bgm_path,
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "128k", "-shortest",
+                final_path
+            ]
+            result = subprocess.run(audio_cmd, capture_output=True, text=True, timeout=60)
+            if result.returncode != 0:
                 final_path = concat_path
         else:
             final_path = concat_path
