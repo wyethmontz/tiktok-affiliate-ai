@@ -50,6 +50,7 @@ class AdRequest(BaseModel):
     goal: str = Field("", max_length=200)
     affiliate_link: str = Field("", max_length=500)
     product_image_urls: list[str] = Field(default_factory=list)
+    user_video_urls: list[str] = Field(default_factory=list)
 
     @field_validator("product_image_urls")
     @classmethod
@@ -62,6 +63,17 @@ class AdRequest(BaseModel):
                 raise ValueError(f"Invalid image URL: {url}")
             if len(url) > 2000:
                 raise ValueError("Image URL too long (max 2000 chars)")
+        return v
+
+    @field_validator("user_video_urls")
+    @classmethod
+    def validate_video_urls(cls, v):
+        if len(v) > 5:
+            raise ValueError("Maximum 5 video clips allowed")
+        for url in v:
+            url = url.strip()
+            if url and not url.startswith(("http://", "https://")):
+                raise ValueError(f"Invalid video URL: {url}")
         return v
 
 
@@ -81,7 +93,9 @@ def _run_job(job_id: str, input_data: dict):
 
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50MB
 
 
 @app.post("/upload-image")
@@ -102,11 +116,34 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
     with open(filepath, "wb") as f:
         f.write(contents)
 
-    # Build the full URL based on request origin
     base_url = str(request.base_url).rstrip("/")
     image_url = f"{base_url}/uploads/{filename}"
 
     return {"url": image_url, "filename": filename}
+
+
+@app.post("/upload-video")
+@limiter.limit("10/minute")
+async def upload_video(request: Request, file: UploadFile = File(...)):
+    """Upload a video clip and return its URL."""
+    if file.content_type not in ALLOWED_VIDEO_TYPES:
+        raise HTTPException(status_code=400, detail="Only MP4, MOV, WebM, and AVI videos allowed")
+
+    contents = await file.read()
+    if len(contents) > MAX_VIDEO_SIZE:
+        raise HTTPException(status_code=400, detail="Video too large (max 50MB)")
+
+    ext = file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "mp4"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    base_url = str(request.base_url).rstrip("/")
+    video_url = f"{base_url}/uploads/{filename}"
+
+    return {"url": video_url, "filename": filename}
 
 
 @app.post("/generate-ad")
@@ -119,6 +156,7 @@ def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTas
         "goal": ad.goal.strip(),
         "affiliate_link": ad.affiliate_link.strip(),
         "product_image_urls": [url.strip() for url in ad.product_image_urls if url.strip()],
+        "user_video_urls": [url.strip() for url in ad.user_video_urls if url.strip()],
     }
 
     job_id = jobs.create_job(input_data)

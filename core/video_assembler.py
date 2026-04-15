@@ -119,20 +119,20 @@ def _build_caption_filter(text: str, total_duration: float) -> str:
 
 def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     video_clip_urls: list[str] | None = None,
-                    product_overlay_url: str | None = None) -> str | None:
+                    product_overlay_url: str | None = None,
+                    user_video_urls: list[str] | None = None) -> str | None:
     """
-    Assemble a TikTok-ready MP4 from video clips (or images) + voiceover + captions.
-    If video_clip_urls are provided, uses those directly (AI-generated motion video).
-    Otherwise falls back to static images with Ken Burns zoom.
-    If product_overlay_url is provided, overlays the product image in the last 3 seconds.
+    Assemble a TikTok-ready MP4 from user video clips, AI video clips, or images + voiceover + captions.
+    Priority: user_video_urls > video_clip_urls > image_urls (Ken Burns fallback).
     Returns base64 data URI of the final video, or None on failure.
     """
-    if not video_clip_urls and not image_urls:
-        print("[VIDEO] No video clips or images to assemble")
+    if not user_video_urls and not video_clip_urls and not image_urls:
+        print("[VIDEO] No content to assemble")
         return None
 
     tmpdir = tempfile.mkdtemp(prefix="tiktok_video_")
-    use_video_clips = bool(video_clip_urls)
+    use_user_videos = bool(user_video_urls)
+    use_video_clips = bool(video_clip_urls) and not use_user_videos
 
     try:
         # Download voiceover if available
@@ -143,8 +143,35 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
 
         scene_clips = []
 
-        if use_video_clips:
-            # === VIDEO CLIP MODE: download AI-generated video clips ===
+        if use_user_videos:
+            # === USER VIDEO MODE: real phone recordings ===
+            print(f"[VIDEO] Using {len(user_video_urls)} user video clips")
+            for i, url in enumerate(user_video_urls):
+                clip_path = os.path.join(tmpdir, f"user_clip_{i}.mp4")
+                _download_file(url, clip_path)
+
+                # Normalize: scale to 1080x1920 (9:16), consistent codec/fps
+                normalized_path = os.path.join(tmpdir, f"scene_{i}.mp4")
+                normalize_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", clip_path,
+                    "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    "-r", "25",
+                    "-an",  # strip original audio — voiceover replaces it
+                    normalized_path
+                ]
+                result = subprocess.run(normalize_cmd, capture_output=True, text=True, timeout=120)
+                if result.returncode != 0:
+                    print(f"[VIDEO] FFmpeg normalize user clip {i} error: {result.stderr[-500:]}")
+                    continue
+
+                scene_clips.append(normalized_path)
+                print(f"[VIDEO] User clip {i + 1} normalized")
+
+        elif use_video_clips:
+            # === AI VIDEO CLIP MODE: download AI-generated video clips ===
             print(f"[VIDEO] Using {len(video_clip_urls)} AI-generated video clips")
             for i, url in enumerate(video_clip_urls):
                 clip_path = os.path.join(tmpdir, f"clip_{i}.mp4")

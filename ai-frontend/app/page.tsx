@@ -9,8 +9,12 @@ export default function Home() {
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
+  const [videoNames, setVideoNames] = useState<string[]>([]);
   const [showImageInputs, setShowImageInputs] = useState(false);
+  const [showVideoInputs, setShowVideoInputs] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [pasteUrl, setPasteUrl] = useState("");
   const [result, setResult] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,6 +23,7 @@ export default function Home() {
   const [captionCopied, setCaptionCopied] = useState(false);
   const [usedProductImages, setUsedProductImages] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [dragOverVideo, setDragOverVideo] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");
@@ -127,6 +132,49 @@ export default function Home() {
     await poll();
   }
 
+  async function uploadVideoFiles(files: FileList | File[]) {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith("video/"));
+    if (fileArray.length === 0) return;
+
+    const remaining = 5 - videoUrls.length;
+    const toUpload = fileArray.slice(0, remaining);
+    if (toUpload.length === 0) return;
+
+    setUploadingVideo(true);
+    for (const file of toUpload) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await axios.post(`${API_URL}/upload-video`, formData);
+        setVideoUrls(prev => [...prev, res.data.url]);
+        setVideoNames(prev => [...prev, file.name]);
+      } catch {
+        setError("Failed to upload video");
+      }
+    }
+    setUploadingVideo(false);
+  }
+
+  function removeVideo(index: number) {
+    setVideoUrls(prev => prev.filter((_, i) => i !== index));
+    setVideoNames(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleVideoDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOverVideo(false);
+    if (e.dataTransfer.files.length > 0) {
+      uploadVideoFiles(e.dataTransfer.files);
+    }
+  }
+
+  function handleVideoInput(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadVideoFiles(e.target.files);
+      e.target.value = "";
+    }
+  }
+
   async function generateAd() {
     setLoading(true);
     setError("");
@@ -135,13 +183,15 @@ export default function Home() {
     setCurrentStep("Starting pipeline...");
 
     const filteredUrls = imageUrls.filter(url => url.trim() !== "");
-    setUsedProductImages(filteredUrls.length > 0);
+    setUsedProductImages(filteredUrls.length > 0 || videoUrls.length > 0);
     setShowImageInputs(false);
+    setShowVideoInputs(false);
 
     try {
       const res = await axios.post(`${API_URL}/generate-ad`, {
         product: product,
         product_image_urls: filteredUrls,
+        user_video_urls: videoUrls,
       });
       await pollJob(res.data.job_id);
     } catch {
@@ -254,6 +304,74 @@ export default function Home() {
                         type="button"
                         onClick={() => removeImage(i)}
                         className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Video Clips — Drag & Drop */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowVideoInputs(!showVideoInputs)}
+            className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+          >
+            {showVideoInputs ? "- Hide video clips" : `+ Add your video clips${videoUrls.length > 0 ? ` (${videoUrls.length})` : " (recommended for sales)"}`}
+          </button>
+
+          {showVideoInputs && (
+            <div className="mt-3 flex flex-col gap-3">
+              <p className="text-xs text-gray-500">
+                Record 5-10 sec clips on your phone — hands holding product, unboxing, using it. AI adds script, voiceover, captions.
+              </p>
+
+              {/* Drop zone */}
+              {videoUrls.length < 5 && (
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOverVideo(true); }}
+                  onDragLeave={() => setDragOverVideo(false)}
+                  onDrop={handleVideoDrop}
+                  onClick={() => document.getElementById("video-input")?.click()}
+                  className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                    dragOverVideo
+                      ? "border-purple-500 bg-purple-500/10"
+                      : "border-gray-600 hover:border-gray-500 bg-gray-800/50"
+                  }`}
+                >
+                  <input
+                    id="video-input"
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    onChange={handleVideoInput}
+                    className="hidden"
+                  />
+                  {uploadingVideo ? (
+                    <p className="text-purple-400 text-sm">Uploading video...</p>
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      Drag & drop video clips here or click to browse (max 5, 50MB each)
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Video list */}
+              {videoNames.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  {videoNames.map((name, i) => (
+                    <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2 text-sm">
+                      <span className="text-gray-300 truncate">{name}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeVideo(i)}
+                        className="text-gray-500 hover:text-red-400 ml-2"
                       >
                         x
                       </button>

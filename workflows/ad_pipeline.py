@@ -150,15 +150,24 @@ def run_pipeline(input_data, on_step=None):
         "content": creative
     })
 
-    # STEP 7 & 8 — IMAGES
+    # STEP 7 — DETERMINE CONTENT MODE
+    user_video_urls = input_data.get("user_video_urls", [])
+    has_user_videos = bool(user_video_urls)
     media = ""
-    if has_product_images:
-        # Use product images directly — no AI image generation needed
+    image_urls = []
+    video_clip_urls = []
+
+    if has_user_videos:
+        # USER VIDEO MODE — real phone recordings, skip all AI image/video gen
+        _step("Using your video clips...")
+        print(f"[PIPELINE] User provided {len(user_video_urls)} video clips — skipping AI image/video generation")
+    elif has_product_images:
+        # PRODUCT PHOTO MODE — use provided images directly
         _step("Using your product images...")
         image_urls = product_image_urls
         print(f"[PIPELINE] Using {len(image_urls)} product images directly")
     else:
-        # Generate AI images
+        # AI MODE — generate everything
         _step("Creating image prompts...")
         media = run_media({
             "scenes": creative,
@@ -168,13 +177,12 @@ def run_pipeline(input_data, on_step=None):
         _step("Generating TikTok images...")
         try:
             image_urls = generate_images(media)
-            # Remove any None values from failed generations
             image_urls = [url for url in image_urls if url is not None]
         except Exception:
             image_urls = []
         print(f"[PIPELINE] Generated {len(image_urls)} AI images")
 
-    # STEP 9 — VOICEOVER (generate first so we know the audio duration)
+    # STEP 8 — VOICEOVER (generate first so we know the audio duration)
     _step("Generating voiceover...")
     voiceover_url = None
     voiceover_duration = None
@@ -187,9 +195,8 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         voiceover_url = None
 
-    # STEP 10 — VIDEO CLIP GENERATION (animate images, match voiceover duration)
-    video_clip_urls = []
-    if image_urls:
+    # STEP 9 — VIDEO CLIP GENERATION (only if using images, not user videos)
+    if not has_user_videos and image_urls:
         _step("Generating motion video clips...")
         try:
             video_clip_urls = generate_video_clips(image_urls, media,
@@ -198,14 +205,14 @@ def run_pipeline(input_data, on_step=None):
         except Exception:
             video_clip_urls = []
 
-    # STEP 11 — VIDEO ASSEMBLY (FFmpeg: video clips + voiceover + product overlay → MP4)
+    # STEP 10 — VIDEO ASSEMBLY
     _step("Assembling TikTok video...")
-    # Use first product image as the CTA overlay in the last 3 seconds
     product_overlay = product_image_urls[0] if product_image_urls else None
     try:
         video_url = assemble_video(image_urls, voiceover_url, copy,
                                    video_clip_urls=video_clip_urls if video_clip_urls else None,
-                                   product_overlay_url=product_overlay)
+                                   product_overlay_url=product_overlay,
+                                   user_video_urls=user_video_urls if has_user_videos else None)
     except Exception:
         video_url = None
 
