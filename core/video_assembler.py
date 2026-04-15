@@ -376,7 +376,19 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
         script_text = _extract_script_text(copy)
         video_duration = _get_video_duration(final_path)
         if script_text and video_duration:
-            caption_filter = _build_caption_filter(script_text, video_duration, word_timestamps=word_timestamps)
+            # Scale word timestamps to fit actual video duration
+            scaled_timestamps = word_timestamps
+            if word_timestamps and len(word_timestamps) > 0:
+                audio_end = word_timestamps[-1]["end"]
+                if audio_end > 0 and abs(audio_end - video_duration) > 0.5:
+                    scale = video_duration / audio_end
+                    scaled_timestamps = [
+                        {"word": w["word"], "start": w["start"] * scale, "end": w["end"] * scale}
+                        for w in word_timestamps
+                    ]
+                    print(f"[VIDEO] Scaled captions from {audio_end:.1f}s to {video_duration:.1f}s")
+
+            caption_filter = _build_caption_filter(script_text, video_duration, word_timestamps=scaled_timestamps)
             if caption_filter:
                 captioned_path = os.path.join(tmpdir, "captioned.mp4")
                 caption_cmd = [
