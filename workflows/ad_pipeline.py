@@ -15,11 +15,18 @@ from core.voiceover import generate_voiceover
 from core.llm import call_claude
 from core.video_assembler import assemble_video
 
-MAX_COMPLIANCE_RETRIES = 2
+MAX_COMPLIANCE_RETRIES = 4
 
-def _fix_copy(copy, compliance_feedback, input_data):
-    """Send the failed copy back to AI with compliance issues to auto-fix."""
-    prompt = f"""You are a TikTok content creator. Your script was flagged for compliance issues.
+def _fix_copy(copy, compliance_feedback, input_data, attempt=1):
+    """Send the failed copy back to AI with compliance issues to auto-fix.
+    Escalates approach on each attempt — gentle fix first, full rewrite last."""
+
+    product = input_data.get('product', '')
+    audience = input_data.get('audience', '')
+
+    if attempt <= 2:
+        # Attempts 1-2: fix the specific issues
+        prompt = f"""You are a TikTok content creator. Your script was flagged for compliance issues.
 
 ORIGINAL SCRIPT:
 {copy}
@@ -27,8 +34,8 @@ ORIGINAL SCRIPT:
 COMPLIANCE ISSUES FOUND:
 {compliance_feedback}
 
-PRODUCT (only facts you can use): {input_data.get('product', '')}
-AUDIENCE: {input_data.get('audience', '')}
+PRODUCT (only facts you can use): {product}
+AUDIENCE: {audience}
 
 Rewrite the script to fix ALL the issues above. Keep the same tone, format, and language (Tagalog).
 
@@ -47,6 +54,37 @@ SCRIPT:
 
 CTA:
 [fixed call-to-action with #ad]
+
+HASHTAGS:
+[5-8 hashtags including #ad]
+"""
+    else:
+        # Attempts 3+: write a completely new script from scratch
+        prompt = f"""You are a TikTok content creator. Previous scripts for this product kept failing compliance checks.
+
+FORGET the previous script. Write a BRAND NEW script from scratch.
+
+PRODUCT: {product}
+AUDIENCE: {audience}
+
+STRICT RULES (every previous script broke these — do NOT repeat):
+- ZERO fabricated claims — no prices, stats, percentages, or reviews you made up
+- ZERO fake urgency — no "limited stocks", "selling out", "last chance"
+- ZERO health/beauty/miracle claims
+- ONLY describe what the product IS based on its name — nothing more
+- CTA MUST include #ad
+- Keep it simple: show excitement about the product without lying
+- 40-50 words ONLY in Tagalog (natural spoken, not formal)
+
+Write something safe and simple — better to be boring and compliant than creative and flagged.
+
+Return in this format:
+
+SCRIPT:
+[brand new safe TikTok script in Tagalog]
+
+CTA:
+[call-to-action with #ad]
 
 HASHTAGS:
 [5-8 hashtags including #ad]
@@ -115,7 +153,7 @@ def run_pipeline(input_data, on_step=None):
     original_input_str = f"Product: {input_data['product']}, Audience: {audience}, Goal: {goal}"
     compliance_status = "FAIL"
 
-    for attempt in range(1, MAX_COMPLIANCE_RETRIES + 2):  # 1 initial + 2 retries
+    for attempt in range(1, MAX_COMPLIANCE_RETRIES + 2):  # 1 initial + N retries
         _step(f"Checking TikTok compliance (attempt {attempt})...")
         compliance = run_compliance({
             "copy": copy,
@@ -131,17 +169,23 @@ def run_pipeline(input_data, on_step=None):
             break
 
         if attempt <= MAX_COMPLIANCE_RETRIES:
-            _step(f"Auto-fixing compliance issues (attempt {attempt})...")
-            print(f"[COMPLIANCE] Failed — auto-fixing...")
-            copy = _fix_copy(copy, compliance, input_data)
+            if attempt <= 2:
+                _step(f"Fixing compliance issues (attempt {attempt})...")
+                print(f"[COMPLIANCE] Failed — fixing specific issues...")
+            else:
+                _step(f"Rewriting script from scratch (attempt {attempt})...")
+                print(f"[COMPLIANCE] Failed {attempt}x — writing brand new script...")
 
-            # Re-run creative director with fixed copy
-            _step("Re-planning visual scenes...")
-            creative = run_creative({
-                "script": copy,
-                "tiktok_format": strategy.get("tiktok_format", ""),
-                "has_product_images": has_product_images,
-            })
+            copy = _fix_copy(copy, compliance, input_data, attempt=attempt)
+
+            # Only re-run creative director on fresh rewrites (attempt 3+)
+            if attempt >= 3:
+                _step("Re-planning visual scenes...")
+                creative = run_creative({
+                    "script": copy,
+                    "tiktok_format": strategy.get("tiktok_format", ""),
+                    "has_product_images": has_product_images,
+                })
         else:
             print(f"[COMPLIANCE] Still failing after {MAX_COMPLIANCE_RETRIES} retries — saving with FAIL status")
 
