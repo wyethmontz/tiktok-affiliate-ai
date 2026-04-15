@@ -111,11 +111,14 @@ def _build_caption_filter(text: str, total_duration: float,
         end_time = start_time + time_per_chunk
         safe_chunk = chunk.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
 
+        # TikTok-style: bold, large, white text with dark box background
         filters.append(
             f"drawtext=text='{safe_chunk}'"
-            f":fontsize=42:fontcolor=white"
-            f":borderw=3:bordercolor=black"
-            f":x=(w-text_w)/2:y=h-150"
+            f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            f":fontsize=58:fontcolor=white"
+            f":borderw=4:bordercolor=black"
+            f":box=1:boxcolor=black@0.5:boxborderw=12"
+            f":x=(w-text_w)/2:y=h*0.75"
             f":enable='between(t,{start_time:.2f},{end_time:.2f})'"
         )
 
@@ -142,11 +145,14 @@ def _build_synced_caption_filter(word_timestamps: list[dict]) -> str:
 
         safe_text = text.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
 
+        # TikTok-style: bold, large, white text with dark box background
         filters.append(
             f"drawtext=text='{safe_text}'"
-            f":fontsize=44:fontcolor=white"
-            f":borderw=3:bordercolor=black"
-            f":x=(w-text_w)/2:y=h-150"
+            f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            f":fontsize=58:fontcolor=white"
+            f":borderw=4:bordercolor=black"
+            f":box=1:boxcolor=black@0.5:boxborderw=12"
+            f":x=(w-text_w)/2:y=h*0.75"
             f":enable='between(t,{start_time:.3f},{end_time:.3f})'"
         )
 
