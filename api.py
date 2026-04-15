@@ -1,6 +1,9 @@
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
+import os
+import uuid
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -17,6 +20,11 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI()
 app.state.limiter = limiter
+
+# Serve uploaded product images
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.exception_handler(RateLimitExceeded)
@@ -70,6 +78,35 @@ def _run_job(job_id: str, input_data: dict):
             jobs.complete_job(job_id, result)
     except Exception as e:
         jobs.fail_job(job_id, str(e))
+
+
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+
+
+@app.post("/upload-image")
+@limiter.limit("20/minute")
+async def upload_image(request: Request, file: UploadFile = File(...)):
+    """Upload a product image and return its URL."""
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP, and GIF images allowed")
+
+    contents = await file.read()
+    if len(contents) > MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Image too large (max 5MB)")
+
+    ext = file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "jpg"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as f:
+        f.write(contents)
+
+    # Build the full URL based on request origin
+    base_url = str(request.base_url).rstrip("/")
+    image_url = f"{base_url}/uploads/{filename}"
+
+    return {"url": image_url, "filename": filename}
 
 
 @app.post("/generate-ad")

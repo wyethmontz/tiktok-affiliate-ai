@@ -12,14 +12,17 @@ export default function Home() {
     affiliate_link: "",
   });
 
-  const [imageUrls, setImageUrls] = useState<string[]>([""]);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [showImageInputs, setShowImageInputs] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<Record<string, string> | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("");
   const [error, setError] = useState("");
   const [captionCopied, setCaptionCopied] = useState(false);
   const [usedProductImages, setUsedProductImages] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");
@@ -37,21 +40,47 @@ export default function Home() {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function updateImageUrl(index: number, value: string) {
-    const updated = [...imageUrls];
-    updated[index] = value;
-    setImageUrls(updated);
+  async function uploadFiles(files: FileList | File[]) {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (fileArray.length === 0) return;
+
+    const remaining = 4 - imageUrls.length;
+    const toUpload = fileArray.slice(0, remaining);
+    if (toUpload.length === 0) return;
+
+    setUploading(true);
+    for (const file of toUpload) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await axios.post(`${API_URL}/upload-image`, formData);
+        setImageUrls(prev => [...prev, res.data.url]);
+        setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
+      } catch {
+        setError("Failed to upload image");
+      }
+    }
+    setUploading(false);
   }
 
-  function addImageUrl() {
-    if (imageUrls.length < 4) {
-      setImageUrls([...imageUrls, ""]);
+  function removeImage(index: number) {
+    setImageUrls(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
     }
   }
 
-  function removeImageUrl(index: number) {
-    const updated = imageUrls.filter((_, i) => i !== index);
-    setImageUrls(updated.length === 0 ? [""] : updated);
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFiles(e.target.files);
+      e.target.value = "";
+    }
   }
 
   async function pollJob(jobId: string) {
@@ -88,6 +117,7 @@ export default function Home() {
 
     const filteredUrls = imageUrls.filter(url => url.trim() !== "");
     setUsedProductImages(filteredUrls.length > 0);
+    setShowImageInputs(false);
 
     try {
       const res = await axios.post(`${API_URL}/generate-ad`, {
@@ -145,44 +175,78 @@ export default function Home() {
           className="bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-pink-500"
         />
 
-        {/* Product Image URLs */}
+        {/* Product Images — Drag & Drop */}
         <div>
           <button
             type="button"
             onClick={() => setShowImageInputs(!showImageInputs)}
             className="text-sm text-pink-400 hover:text-pink-300 transition-colors"
           >
-            {showImageInputs ? "- Hide product images" : "+ Add product images (optional)"}
+            {showImageInputs ? "- Hide product images" : `+ Add product images${imageUrls.length > 0 ? ` (${imageUrls.length})` : " (optional)"}`}
           </button>
 
           {showImageInputs && (
-            <div className="mt-3 flex flex-col gap-2">
-              <p className="text-xs text-gray-500">Paste image URLs from Shopee, Lazada, or TikTok Shop. Skips AI image generation.</p>
-              {imageUrls.map((url, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    placeholder="https://... (product image URL)"
-                    value={url}
-                    onChange={(e) => updateImageUrl(i, e.target.value)}
-                    className="flex-1 bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-pink-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImageUrl(i)}
-                    className="text-gray-500 hover:text-red-400 px-2"
-                  >
-                    x
-                  </button>
-                </div>
-              ))}
+            <div className="mt-3 flex flex-col gap-3">
+              <p className="text-xs text-gray-500">
+                Drop product photos here — real images build buyer trust and drive sales.
+              </p>
+
+              {/* Drop zone */}
               {imageUrls.length < 4 && (
-                <button
-                  type="button"
-                  onClick={addImageUrl}
-                  className="text-xs text-gray-400 hover:text-pink-400 text-left"
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById("file-input")?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
+                    dragOver
+                      ? "border-pink-500 bg-pink-500/10"
+                      : "border-gray-600 hover:border-gray-500 bg-gray-800/50"
+                  }`}
                 >
-                  + Add another image (max 4)
-                </button>
+                  <input
+                    id="file-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  {uploading ? (
+                    <p className="text-pink-400 text-sm">Uploading...</p>
+                  ) : (
+                    <>
+                      <p className="text-gray-400 text-sm">
+                        Drag & drop product images here
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        or click to browse (max 4 images, 5MB each)
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Image previews */}
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {imagePreviews.map((preview, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={preview}
+                        alt={`Product ${i + 1}`}
+                        className="w-full aspect-square object-cover rounded-lg border border-gray-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(i)}
+                        className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

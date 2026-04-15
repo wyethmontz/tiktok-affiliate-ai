@@ -211,5 +211,8 @@ node_modules/
 ai-frontend/.next/
 ai-frontend/out/
 
+# Uploaded product images
+uploads/
+
 # Claude Code
 .claude/
