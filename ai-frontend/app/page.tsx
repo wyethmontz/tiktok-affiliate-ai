@@ -25,7 +25,7 @@ export default function Home() {
   const [dragOver, setDragOver] = useState(false);
   const [dragOverVideo, setDragOverVideo] = useState(false);
   const [useAiVideo, setUseAiVideo] = useState(false);
-  const [bgmStyle, setBgmStyle] = useState("lofi");
+  const [bgmStyle, setBgmStyle] = useState("upbeat");
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");

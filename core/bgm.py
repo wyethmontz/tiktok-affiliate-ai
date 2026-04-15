@@ -43,7 +43,7 @@ BGM_STYLES = {
     },
 }
 
-DEFAULT_STYLE = "lofi"
+DEFAULT_STYLE = "upbeat"
 
 
 def generate_bgm(duration: float, output_path: str, style: str = DEFAULT_STYLE) -> bool:

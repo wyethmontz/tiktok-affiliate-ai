@@ -52,7 +52,7 @@ class AdRequest(BaseModel):
     product_image_urls: list[str] = Field(default_factory=list)
     user_video_urls: list[str] = Field(default_factory=list)
     use_ai_video: bool = Field(False)  # off by default to save costs
-    bgm_style: str = Field("lofi", max_length=20)  # lofi, upbeat, soft
+    bgm_style: str = Field("upbeat", max_length=20)  # upbeat, lofi, soft
 
     @field_validator("product_image_urls")
     @classmethod
