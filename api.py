@@ -51,6 +51,7 @@ class AdRequest(BaseModel):
     affiliate_link: str = Field("", max_length=500)
     product_image_urls: list[str] = Field(default_factory=list)
     user_video_urls: list[str] = Field(default_factory=list)
+    use_ai_video: bool = Field(False)  # off by default to save costs
 
     @field_validator("product_image_urls")
     @classmethod
@@ -157,6 +158,7 @@ def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTas
         "affiliate_link": ad.affiliate_link.strip(),
         "product_image_urls": [url.strip() for url in ad.product_image_urls if url.strip()],
         "user_video_urls": [url.strip() for url in ad.user_video_urls if url.strip()],
+        "use_ai_video": ad.use_ai_video,
     }
 
     job_id = jobs.create_job(input_data)

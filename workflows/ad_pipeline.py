@@ -269,15 +269,18 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         voiceover_url = None
 
-    # STEP 9 — VIDEO CLIP GENERATION (only if using images, not user videos)
-    if not has_user_videos and image_urls:
-        _step("Generating motion video clips...")
+    # STEP 9 — VIDEO CLIP GENERATION (optional — off by default to save costs)
+    use_ai_video = input_data.get("use_ai_video", False)
+    if use_ai_video and not has_user_videos and image_urls:
+        _step("Generating AI motion video clips...")
         try:
             video_clip_urls = generate_video_clips(image_urls, media,
                                                    target_duration=voiceover_duration)
             print(f"[PIPELINE] Generated {len(video_clip_urls)}/{len(image_urls)} video clips")
         except Exception:
             video_clip_urls = []
+    elif not has_user_videos:
+        print(f"[PIPELINE] Using free FFmpeg video mode (AI video gen disabled)")
 
     # STEP 10 — VIDEO ASSEMBLY
     _step("Assembling TikTok video...")

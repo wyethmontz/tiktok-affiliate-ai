@@ -24,6 +24,7 @@ export default function Home() {
   const [usedProductImages, setUsedProductImages] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [dragOverVideo, setDragOverVideo] = useState(false);
+  const [useAiVideo, setUseAiVideo] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");
@@ -192,6 +193,7 @@ export default function Home() {
         product: product,
         product_image_urls: filteredUrls,
         user_video_urls: videoUrls,
+        use_ai_video: useAiVideo,
       });
       await pollJob(res.data.job_id);
     } catch {
@@ -382,6 +384,17 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* AI Video Toggle */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className={`relative w-10 h-5 rounded-full transition-colors ${useAiVideo ? 'bg-purple-600' : 'bg-gray-700'}`}
+               onClick={() => setUseAiVideo(!useAiVideo)}>
+            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          </div>
+          <span className="text-sm text-gray-400">
+            {useAiVideo ? "AI motion video ON (~$1-2/ad)" : "Free video mode (CapCut-style editing)"}
+          </span>
+        </label>
 
         <button
           onClick={generateAd}
