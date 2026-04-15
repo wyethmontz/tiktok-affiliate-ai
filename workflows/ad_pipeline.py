@@ -170,6 +170,11 @@ def run_pipeline(input_data, on_step=None):
             print(f"[PIPELINE] Generated {len(image_urls)} realistic product scenes via Kontext")
         except Exception as e:
             print(f"[PIPELINE] Kontext failed ({e}), falling back to raw product photos")
+            image_urls = []
+
+        # Fallback: if Kontext generated nothing, use raw product photos
+        if not image_urls:
+            print(f"[PIPELINE] Using raw product photos as fallback")
             image_urls = product_image_urls
     else:
         # AI MODE — generate everything

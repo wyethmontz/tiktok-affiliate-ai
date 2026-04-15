@@ -1,4 +1,6 @@
 import os
+import re
+import base64
 import time
 import httpx
 from dotenv import load_dotenv
@@ -52,7 +54,34 @@ GENERIC_SCENE_PROMPTS = [
 ]
 
 
-def _run_kontext(product_image_url: str, prompt: str) -> str | None:
+def _convert_gdrive_url(url: str) -> str:
+    """Convert Google Drive share links to direct download URLs."""
+    match = re.search(r'drive\.google\.com/file/d/([^/]+)', url)
+    if match:
+        return f"https://drive.google.com/uc?export=download&id={match.group(1)}"
+    return url
+
+
+def _url_to_data_uri(url: str) -> str:
+    """Download an image URL and convert to base64 data URI.
+    Replicate needs a publicly accessible URL or data URI.
+    Google Drive and localhost URLs don't work directly."""
+    if url.startswith("data:"):
+        return url
+
+    url = _convert_gdrive_url(url)
+    print(f"[KONTEXT] Downloading image: {url[:80]}...")
+
+    with httpx.Client(timeout=30, follow_redirects=True) as client:
+        res = client.get(url)
+        res.raise_for_status()
+
+        content_type = res.headers.get("content-type", "image/jpeg").split(";")[0]
+        b64 = base64.b64encode(res.content).decode()
+        return f"data:{content_type};base64,{b64}"
+
+
+def _run_kontext(image_data_uri: str, prompt: str) -> str | None:
     """Call Flux Kontext Pro to generate a product-in-context scene."""
     headers = {
         "Authorization": f"Bearer {REPLICATE_API_TOKEN}",
@@ -61,7 +90,7 @@ def _run_kontext(product_image_url: str, prompt: str) -> str | None:
     body = {
         "input": {
             "prompt": prompt,
-            "input_image": product_image_url,
+            "input_image": image_data_uri,
             "aspect_ratio": "9:16",
             "output_format": "webp",
             "output_quality": 80,
@@ -72,7 +101,9 @@ def _run_kontext(product_image_url: str, prompt: str) -> str | None:
 
     with httpx.Client(timeout=120) as client:
         res = client.post(KONTEXT_API_URL, headers=headers, json=body)
-        res.raise_for_status()
+        if res.status_code != 201 and res.status_code != 200:
+            print(f"[KONTEXT] API error {res.status_code}: {res.text[:300]}")
+            res.raise_for_status()
         prediction = res.json()
 
         poll_url = prediction["urls"]["get"]
@@ -102,6 +133,14 @@ def generate_product_scenes(product_image_url: str, num_scenes: int = 4,
         print("[KONTEXT] No REPLICATE_API_TOKEN set, skipping")
         return []
 
+    # Download product image once and convert to data URI
+    try:
+        image_data_uri = _url_to_data_uri(product_image_url)
+        print(f"[KONTEXT] Product image loaded ({len(image_data_uri) // 1024}KB data URI)")
+    except Exception as e:
+        print(f"[KONTEXT] Failed to download product image: {e}")
+        return []
+
     prompts = TOY_SCENE_PROMPTS if product_type == "toy" else GENERIC_SCENE_PROMPTS
     prompts = prompts[:num_scenes]
 
@@ -111,7 +150,7 @@ def generate_product_scenes(product_image_url: str, num_scenes: int = 4,
             if i > 0:
                 time.sleep(3)  # Avoid rate limiting
             print(f"[KONTEXT] Generating scene {i + 1}/{len(prompts)}...")
-            url = _run_kontext(product_image_url, prompt)
+            url = _run_kontext(image_data_uri, prompt)
             if url:
                 scene_urls.append(url)
                 print(f"[KONTEXT] Scene {i + 1} done")
