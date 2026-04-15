@@ -13,6 +13,67 @@ Before your first post, you only need 3 things done:
    - Example: `🚗 Toy finds sa TikTok Shop 🛒 Para sa bata at collectors 👇 Watch my reviews!`
 3. **Profile photo** — use a product image from your pipeline or your face
 
+### Full Video Creation Process (Step by Step)
+
+**Step 1: Find a product to promote**
+- Open TikTok Shop (in TikTok app > Shop tab) and browse trending toys
+- Or open Shopee/Lazada and look at bestsellers in Toys category
+- Pick something under 500 PHP (impulse buy range)
+- Pick something visually interesting — colorful, unique, or trending
+
+**Step 2: Get the product image**
+- On TikTok Shop: tap the product > screenshot the main product photo
+- On Shopee: tap the product > long-press the image > Save image
+- On Lazada: same — save the main product listing image
+- From Google: search the product name > Images > save one with clean white background
+- Your own photo: place the toy on a white table, take a photo with good lighting
+
+**Best product photo for AI:**
+- Single product, not multiple items
+- Clean background (white or plain)
+- Well-lit, sharp focus, not blurry
+- Shows the full product (not cropped or cut off)
+
+**Step 3: Generate the video on your PC**
+1. Make sure Docker is running (`docker-compose up`)
+2. Open `http://localhost:3000`
+3. Type the product name — be specific (e.g., `Lightning McQueen Sky Blue Custom Edition` not just `car toy`)
+4. Click **"+ Add product images"**
+5. Either:
+   - **Drag & drop** the saved image from your desktop
+   - **Paste a URL** from the product listing page
+   - **Paste a Google Drive link** (make sure sharing is set to "Anyone with the link")
+6. Click **"Generate TikTok Ad"**
+7. Wait ~2-3 minutes (you'll see progress steps)
+8. Review the result:
+   - Compliance badge should be **green** (TikTok Compliant)
+   - Watch the video — check the images look good
+   - Listen to voiceover — should match the captions
+9. Click **"Download MP4"** to save the video
+10. Click **"Copy Caption"** to copy the TikTok caption
+
+**Step 4: Transfer video to your phone**
+- **Fastest:** Upload MP4 to Google Drive > open Drive on phone > download to camera roll
+- **Alternative:** Send the MP4 to yourself on Telegram/Messenger > save to phone
+- **USB:** Connect phone to PC > copy file to phone
+
+**Step 5: Post to TikTok (on your phone)**
+1. Open TikTok app
+2. Tap **+** (bottom center)
+3. Tap **Upload** (bottom right)
+4. Select the MP4 from your camera roll
+5. Tap **Next** — trim if needed (usually no trimming needed)
+6. **Paste the caption** you copied from the app
+7. Tap **More options (...)** at the bottom
+8. Turn ON **"AI-generated content"** toggle (REQUIRED)
+9. Tap **Post**
+
+**Step 6: After posting**
+- Reply to every comment within the first hour
+- Don't delete the video even if it gets 0 views
+- Generate your next video for a different product
+- Post again at the next peak time
+
 **Then post your first video at the right time:**
 
 | Time (PHT) | Priority |
