@@ -256,15 +256,17 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 print(f"[VIDEO] No voiceover to sync — using {scene_duration}s per scene")
 
             # Different motion effect per scene for variety
+            # All effects use safe zoom/pan ranges to avoid edge artifacts
+            # Input is scaled to 1440x2560 (1.33x of 1080x1920) for headroom
             motion_effects = [
-                # Scene 1: Zoom in (attention grab)
-                "zoompan=z='min(zoom+0.003,1.2)':d={d}:s=1080x1920:fps=25",
-                # Scene 2: Pan left to right
-                "zoompan=z='1.15':x='iw/2-(iw/zoom/2)+((iw/zoom)*0.15*(on/{d}))':d={d}:s=1080x1920:fps=25",
-                # Scene 3: Zoom out (reveal)
-                "zoompan=z='1.2-((on/{d})*0.15)':d={d}:s=1080x1920:fps=25",
-                # Scene 4: Pan right to left
-                "zoompan=z='1.15':x='iw/2-(iw/zoom/2)-((iw/zoom)*0.15*(on/{d}))':d={d}:s=1080x1920:fps=25",
+                # Scene 1: Slow zoom in
+                "zoompan=z='1.0+on/{d}*0.12':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
+                # Scene 2: Slow pan left to right (small range)
+                "zoompan=z='1.08':x='iw/2-(iw/zoom/2)+(on/{d})*40':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
+                # Scene 3: Slow zoom out
+                "zoompan=z='1.12-on/{d}*0.08':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
+                # Scene 4: Slow pan right to left (small range)
+                "zoompan=z='1.08':x='iw/2-(iw/zoom/2)-(on/{d})*40':y='ih/2-(ih/zoom/2)':d={d}:s=1080x1920:fps=25",
             ]
 
             for i, img_path in enumerate(image_files):
@@ -275,9 +277,10 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 motion_template = motion_effects[i % len(motion_effects)]
                 motion_filter = motion_template.format(d=total_frames)
 
+                # Scale larger than output to give zoompan headroom (no edge artifacts)
                 vf = (
-                    f"scale=1200:2132:force_original_aspect_ratio=increase,"
-                    f"crop=1200:2132,"
+                    f"scale=1440:2560:force_original_aspect_ratio=increase,"
+                    f"crop=1440:2560,"
                     f"{motion_filter}"
                 )
 
