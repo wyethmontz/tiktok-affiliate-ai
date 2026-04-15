@@ -136,7 +136,7 @@ export default function AdCard({ ad }: { ad: Ad }) {
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-sm font-semibold text-gray-400">TikTok Video</h4>
                 <a
-                  href={fullAd?.video_url || ad.video_url}
+                  href={fullAd?.video_url ?? ad.video_url ?? undefined}
                   download="tiktok-ad.mp4"
                   className="text-xs bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg transition-colors"
                 >
@@ -148,7 +148,7 @@ export default function AdCard({ ad }: { ad: Ad }) {
                 className="w-full rounded-lg border border-gray-700"
                 style={{ aspectRatio: "9/16", maxHeight: "400px" }}
               >
-                <source src={fullAd?.video_url || ad.video_url} type="video/mp4" />
+                <source src={fullAd?.video_url ?? ad.video_url ?? ""} type="video/mp4" />
               </video>
             </div>
           )}
@@ -217,7 +217,7 @@ export default function AdCard({ ad }: { ad: Ad }) {
             <div>
               <h4 className="text-sm font-semibold text-gray-400 mb-2">Voiceover</h4>
               <audio controls className="w-full">
-                <source src={fullAd?.voiceover_url || ad.voiceover_url} type="audio/mpeg" />
+                <source src={fullAd?.voiceover_url ?? ad.voiceover_url ?? ""} type="audio/mpeg" />
               </audio>
             </div>
           )}
