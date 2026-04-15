@@ -9,6 +9,7 @@ from agents.compliance import run_compliance
 from agents.optimizer import run_optimizer
 from core.db import save_ad
 from core.image_gen import generate_images
+from core.product_scenes import generate_product_scenes
 from core.video_gen import generate_video_clips
 from core.voiceover import generate_voiceover
 from core.llm import call_claude
@@ -162,10 +163,14 @@ def run_pipeline(input_data, on_step=None):
         _step("Using your video clips...")
         print(f"[PIPELINE] User provided {len(user_video_urls)} video clips — skipping AI image/video generation")
     elif has_product_images:
-        # PRODUCT PHOTO MODE — use provided images directly
-        _step("Using your product images...")
-        image_urls = product_image_urls
-        print(f"[PIPELINE] Using {len(image_urls)} product images directly")
+        # KONTEXT MODE — generate realistic in-use scenes from product photo
+        _step("Generating realistic product scenes...")
+        try:
+            image_urls = generate_product_scenes(product_image_urls[0], num_scenes=4)
+            print(f"[PIPELINE] Generated {len(image_urls)} realistic product scenes via Kontext")
+        except Exception as e:
+            print(f"[PIPELINE] Kontext failed ({e}), falling back to raw product photos")
+            image_urls = product_image_urls
     else:
         # AI MODE — generate everything
         _step("Creating image prompts...")

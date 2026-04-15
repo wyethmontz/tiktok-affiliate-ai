@@ -235,7 +235,7 @@ export default function Home() {
           {showImageInputs && (
             <div className="mt-3 flex flex-col gap-3">
               <p className="text-xs text-gray-500">
-                Drop photos, browse files, or paste a Google Drive / image link.
+                Drop 1 product photo — AI generates realistic scenes of hands holding, unboxing, and using your product.
               </p>
 
               {/* URL paste input */}

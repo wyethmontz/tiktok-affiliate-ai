@@ -50,17 +50,23 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 TikTok-compliant affiliate ad generation pipeline with 8 agents:
 
 ```
-User Input (product, audience, goal, affiliate_link)
+User Input (product name + product photo or video clips)
    -> Optimizer        (learns from past top-scoring ads)
-   -> Strategist       (creates hook, angle, positioning — TikTok-native)
+   -> Strategist       (creates hook, angle, positioning + auto-detects audience/goal)
    -> Copywriter       (writes TikTok script + CTA with affiliate disclosure)
-   -> Creative Director (breaks into 4-5 visual scenes, 9:16 format)
+   -> Creative Director (breaks into visual scenes, 9:16 format)
    -> Compliance Agent  (checks for TikTok policy violations)
-   -> Media Generator   (creates AI image prompts optimized for TikTok)
-   -> Image Generator   (Flux via Replicate — generates actual images)
-   -> Video Generator   (Wan 2.5 I2V via Replicate — animates images into motion video)
-   -> Voiceover         (ElevenLabs TTS — generates narration audio)
-   -> Video Assembler   (FFmpeg — stitches clips + voiceover into final MP4)
+   -> [MODE A: Product Photo]
+      -> Kontext Scenes (Flux Kontext Pro — generates realistic in-use scenes from product photo)
+      -> Video Generator (Wan 2.5 I2V — animates scenes into motion video)
+   -> [MODE B: User Video Clips]
+      -> Skip image/video gen — use real phone recordings directly
+   -> [MODE C: No images]
+      -> Media Generator (creates AI image prompts)
+      -> Image Generator (Flux Schnell — generates images)
+      -> Video Generator (Wan 2.5 I2V — animates into motion video)
+   -> Voiceover         (ElevenLabs TTS — Filipina voice, synced to video duration)
+   -> Video Assembler   (FFmpeg — stitches clips + voiceover + captions into final MP4)
    -> Supabase          (saves everything)
    -> Frontend          (displays results with video player)
 ```
@@ -112,6 +118,7 @@ Every generated ad MUST include:
 - `core/analytics.py` — Analytics queries
 - `core/auth.py` — JWT auth middleware (Supabase Auth)
 - `core/image_gen.py` — Replicate Flux API (image generation)
+- `core/product_scenes.py` — Replicate Flux Kontext Pro (product-in-context scene generation)
 - `core/video_gen.py` — Replicate Wan 2.5 I2V API (image-to-video animation)
 - `core/voiceover.py` — ElevenLabs TTS API (voiceover generation)
 - `workflows/ad_pipeline.py` — 10-step pipeline orchestration
