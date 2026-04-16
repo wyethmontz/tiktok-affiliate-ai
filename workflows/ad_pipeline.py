@@ -317,13 +317,28 @@ def run_pipeline(input_data, on_step=None):
     hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
     cta_text = cta_match.group(1).strip() if cta_match else ""
     hashtags = hashtag_match.group(1).strip() if hashtag_match else "#ad #TikTokShop #fyp"
-    # Ensure AIGC disclosure is in hashtags (avoid duplicates)
-    hashtags_lower = hashtags.lower()
-    if "#aigenerated" not in hashtags_lower:
-        hashtags = hashtags.rstrip() + " #AIgenerated"
-    if "#ad" not in hashtags_lower:
-        hashtags = "#ad " + hashtags
-    tiktok_caption = f"{cta_text}\n\n{hashtags}".strip()
+
+    # Deduplicate: collect all unique hashtags from CTA + HASHTAGS section
+    all_tags = re.findall(r'#\w+', f"{cta_text} {hashtags}")
+    seen = set()
+    unique_tags = []
+    for tag in all_tags:
+        tag_lower = tag.lower()
+        if tag_lower not in seen:
+            seen.add(tag_lower)
+            unique_tags.append(tag)
+
+    # Ensure required tags are present
+    if "#ad" not in {t.lower() for t in unique_tags}:
+        unique_tags.insert(0, "#ad")
+    if "#aigenerated" not in {t.lower() for t in unique_tags}:
+        unique_tags.append("#AIgenerated")
+
+    hashtags = " ".join(unique_tags)
+
+    # CTA text without hashtags (they go in the hashtag line)
+    cta_clean = re.sub(r'#\w+', '', cta_text).strip()
+    tiktok_caption = f"{cta_clean}\n\n{hashtags}".strip()
 
     # STEP 13 — SAVE TO SUPABASE
     _step("Saving to database...")
