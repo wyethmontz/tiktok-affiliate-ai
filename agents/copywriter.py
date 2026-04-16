@@ -56,6 +56,8 @@ Do NOT always use "POV:" or "Naghahanap ka" — pick a different style each time
 
 COMPLIANCE (REQUIRED):
 - The CTA MUST include #ad or "ad" disclosure for affiliate transparency
+- Do NOT say "link sa bio" or "link in bio" — there is no link yet
+- Instead use CTAs like: "Search niyo sa TikTok Shop #ad", "Hanap niyo sa TikTok Shop #ad", "Check TikTok Shop #ad"
 - Do NOT make health, medical, or miracle claims
 - Do NOT claim celebrity endorsements unless provided in input
 
@@ -65,7 +67,7 @@ SCRIPT:
 [the full TikTok script in {language} — 30-40 words MAX, short, punchy, natural pace]
 
 CTA:
-[call-to-action in {language} with affiliate disclosure, e.g. "Link sa bio ko #ad #TikTokShop"]
+[call-to-action in {language} with #ad — direct to TikTok Shop search, NOT "link sa bio"]
 
 HASHTAGS:
 [5-8 relevant TikTok hashtags including #ad]
