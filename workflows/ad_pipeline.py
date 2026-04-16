@@ -114,21 +114,23 @@ def run_pipeline(input_data, on_step=None):
     except Exception:
         insights = None
 
-    # Fetch past scripts for this product to avoid duplicates
+    # Fetch recent hooks from ALL ads to avoid repetitive patterns across products
     past_hooks = []
     try:
-        past_ads = supabase.table("ads").select("hook,copy").ilike(
-            "product", f"%{input_data['product']}%"
-        ).order("created_at", desc=True).limit(5).execute().data
-        past_hooks = [a.get("hook", "") for a in past_ads if a.get("hook")]
+        recent_ads = supabase.table("ads").select("hook").order(
+            "created_at", desc=True
+        ).limit(10).execute().data
+        past_hooks = [a.get("hook", "") for a in recent_ads if a.get("hook")]
         if past_hooks:
-            print(f"[PIPELINE] Found {len(past_hooks)} past ads for this product — will avoid duplicate hooks")
+            print(f"[PIPELINE] Found {len(past_hooks)} recent hooks — will avoid repeating patterns")
     except Exception:
         pass
 
     # STEP 2 — STRATEGIST
     _step("Creating TikTok strategy...")
-    strategy_raw = run_strategist(input_data, insights=insights)
+    # Pass past hooks so strategist picks a different style
+    input_data_for_strategy = {**input_data, "past_hooks": past_hooks}
+    strategy_raw = run_strategist(input_data_for_strategy, insights=insights)
 
     print("\n[RAW STRATEGIST OUTPUT]\n")
     print(strategy_raw)

@@ -5,6 +5,17 @@ def run_strategist(input_data, insights=None):
     product = input_data["product"]
     audience = input_data.get("audience", "")
     goal = input_data.get("goal", "")
+    past_hooks = input_data.get("past_hooks", [])
+
+    past_hooks_block = ""
+    if past_hooks:
+        hooks_list = "\n".join(f"- {h}" for h in past_hooks)
+        past_hooks_block = f"""
+RECENTLY USED HOOKS (do NOT repeat these or use similar patterns):
+{hooks_list}
+
+Write a hook that uses a COMPLETELY DIFFERENT style and opening from all of the above.
+"""
 
     insights_block = ""
     if insights:
@@ -30,6 +41,18 @@ RULES:
 - The angle should feel organic, not like a traditional ad
 - Main goal: boost engagement, attract views, and drive clicks
 
+HOOK VARIETY (CRITICAL):
+- Each hook MUST use a DIFFERENT opening style. Rotate between these:
+  * Reaction: "Grabe!" / "Wait, legit ba?"
+  * Question: "Alam niyo ba...?" / "Sino dito...?"
+  * Storytime: "Kinulit ako ng anak ko..."
+  * Challenge: "Hanap niyo ito sa mall..."
+  * Show-off: "Tignan niyo ito..."
+  * Surprise: "Hindi ko inexpect na ganito kaganda..."
+- Do NOT start with "Grabe ang ganda" — that pattern is overused
+- Do NOT always use "POV:" format
+- The hook must be in Tagalog, natural spoken Filipino
+
 IF NO AUDIENCE IS PROVIDED:
 - Auto-determine the best target audience based on the product
 - Think about who would actually buy this on TikTok Shop (age, gender, interests, Filipino context)
@@ -49,7 +72,7 @@ EXAMPLE OUTPUT:
   "auto_goal": "Drive affiliate clicks via TikTok Shop link"
 }}
 
-{insights_block}REAL INPUT:
+{insights_block}{past_hooks_block}REAL INPUT:
 Product: {product}
 Audience: {audience if audience else "(auto-detect from product)"}
 Platform: TikTok
