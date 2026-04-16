@@ -217,5 +217,8 @@ uploads/
 # Policy cache
 policy_cache.json
 
+# Google credentials
+google-creds.json
+
 # Claude Code
 .claude/
