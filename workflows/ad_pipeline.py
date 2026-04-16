@@ -47,6 +47,7 @@ RULES:
 - Make sure CTA includes #ad disclosure
 - Only describe what the product actually does based on the product name
 - Keep it 30-40 words MAXIMUM (must fit a 14-second video, count your words)
+- Do NOT use apostrophe contractions ('to, 'yan, 'yung, 'di) — write full words: ito, iyan, iyong, hindi
 
 Return in this format:
 
@@ -54,10 +55,13 @@ SCRIPT:
 [fixed TikTok script]
 
 CTA:
-[fixed call-to-action with #ad]
+[comment-based CTA with #ad]
+
+ENGAGEMENT QUESTION:
+[a "this or that" question to drive comments]
 
 HASHTAGS:
-[5-8 hashtags including #ad]
+[5-8 hashtags including #ad #ToysPH #BudolFinds]
 """
     else:
         # Attempts 3+: write a completely new script from scratch
@@ -76,6 +80,8 @@ STRICT RULES (every previous script broke these — do NOT repeat):
 - CTA MUST include #ad
 - Keep it simple: show excitement about the product without lying
 - 30-40 words MAXIMUM in Tagalog (natural spoken, not formal — count your words)
+- Do NOT use apostrophe contractions ('to, 'yan, 'yung, 'di) — write full words: ito, iyan, iyong, hindi
+- If the product is a toy, use words like "toy", "model", or "collectible"
 
 Write something safe and simple — better to be boring and compliant than creative and flagged.
 
@@ -85,10 +91,13 @@ SCRIPT:
 [brand new safe TikTok script in Tagalog]
 
 CTA:
-[call-to-action with #ad]
+[comment-based CTA with #ad]
+
+ENGAGEMENT QUESTION:
+[a "this or that" question to drive comments]
 
 HASHTAGS:
-[5-8 hashtags including #ad]
+[5-8 hashtags including #ad #ToysPH #BudolFinds]
 """
     return call_claude(prompt)
 
@@ -312,11 +321,13 @@ def run_pipeline(input_data, on_step=None):
 
     # STEP 12 — GENERATE TIKTOK CAPTION
     _step("Creating TikTok caption...")
-    # Extract CTA and hashtags from copy
-    cta_match = re.search(r'CTA:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
+    # Extract CTA, engagement question, and hashtags
+    cta_match = re.search(r'CTA:\s*(.+?)(?:ENGAGEMENT QUESTION:|HASHTAGS:|$)', copy, re.DOTALL)
+    engagement_match = re.search(r'ENGAGEMENT QUESTION:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
     hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
     cta_text = cta_match.group(1).strip() if cta_match else ""
-    hashtags = hashtag_match.group(1).strip() if hashtag_match else "#ad #TikTokShop #fyp"
+    engagement_q = engagement_match.group(1).strip() if engagement_match else ""
+    hashtags = hashtag_match.group(1).strip() if hashtag_match else "#ad #ToysPH #BudolFinds"
 
     # Deduplicate: collect all unique hashtags from CTA + HASHTAGS section
     all_tags = re.findall(r'#\w+', f"{cta_text} {hashtags}")
@@ -334,11 +345,18 @@ def run_pipeline(input_data, on_step=None):
     if "#aigenerated" not in {t.lower() for t in unique_tags}:
         unique_tags.append("#AIgenerated")
 
+    # Inject PH niche tags if missing
+    for tag in ["#ToysPH", "#DiecastPH", "#TikTokShopPH"]:
+        if tag.lower() not in seen:
+            unique_tags.insert(1, tag)
+            seen.add(tag.lower())
+
     hashtags = " ".join(unique_tags)
 
-    # CTA text without hashtags (they go in the hashtag line)
+    # Build caption: CTA + engagement question + hashtags
     cta_clean = re.sub(r'#\w+', '', cta_text).strip()
-    tiktok_caption = f"{cta_clean}\n\n{hashtags}".strip()
+    parts = [p for p in [cta_clean, engagement_q, hashtags] if p]
+    tiktok_caption = "\n\n".join(parts).strip()
 
     # STEP 13 — SAVE TO SUPABASE
     _step("Saving to database...")

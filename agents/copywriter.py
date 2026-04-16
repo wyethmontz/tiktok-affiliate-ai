@@ -34,43 +34,46 @@ Requirements:
 - Write the ENTIRE script in {language} (natural spoken Tagalog, not formal/textbook)
 - Open with a scroll-stopping hook (first 2 seconds are everything)
 - Write in first-person, conversational TikTok voice — parang kwento sa kaibigan
-- STRICT: Keep the SCRIPT section to 30-40 words MAXIMUM (this will be read aloud over a 14-second video — if you write more than 40 words the speech will be too fast and unnatural). Count your words before returning.
+- STRICT: Keep the SCRIPT section to 30-40 words MAXIMUM (this will be read aloud over a 14-second video). Count your words before returning.
 - Match the TikTok format style (GRWM, storytime, POV, etc.)
 - End with a CTA that includes affiliate disclosure
-- Do NOT invent specific prices, statistics, percentages, or claims
+- Do NOT invent specific prices or fake claims
 - Do NOT fabricate testimonials, reviews, or fake social proof
 - Do NOT use fake urgency like "mauubos na" or "limited stocks" unless the user said so
 - Only describe what the product actually does based on the input provided
 - Do NOT mention specific store names (Toy Kingdom, SM, etc.) — keep it general
 - Do NOT read product specs like a listing (no "1:36 scale alloy model") — describe it naturally like a person would
-- Do NOT use apostrophe contractions like 'to, 'yan, 'yung, 'di — write the full word instead: ito, iyan, iyong, hindi. The voiceover AI pauses awkwardly on apostrophes.
+- Do NOT use apostrophe contractions like 'to, 'yan, 'yung, 'di — write full words: ito, iyan, iyong, hindi (crucial for ElevenLabs voiceover)
 
 HOOK VARIETY (CRITICAL — use a DIFFERENT style each time):
-- Reaction: "Grabe ang ganda nito!" / "Wait, legit ba 'to?!"
+- Reaction: "Grabe ang ganda nito!" / "Wait, legit ba ito?!"
 - Question: "Alam niyo ba yung toy na trending ngayon?"
 - Storytime: "Anak ko kinulit ako para dito..."
-- Discovery: "Guys check niyo 'to!"
+- Discovery: "Guys check niyo ito!"
 - Challenge: "Hanap kayo nito sa mall, wala!"
-- Show-off: "Tignan niyo yung details ng toy na 'to..."
+- Show-off: "Tignan niyo yung details ng toy na ito..."
 Do NOT always use "POV:" or "Naghahanap ka" — pick a different style each time.
 
 COMPLIANCE (REQUIRED):
-- The CTA MUST include #ad or "ad" disclosure for affiliate transparency
+- The CTA MUST include #ad disclosure
 - Do NOT say "link sa bio" or "link in bio" — there is no link yet
-- Instead use CTAs like: "Search niyo sa TikTok Shop #ad", "Hanap niyo sa TikTok Shop #ad", "Check TikTok Shop #ad"
+- Use comment-based CTAs like: "Comment INFO kung gusto niyo rin ito! #ad" or "Comment TOY para ma-send ko link! #ad"
 - Do NOT make health, medical, or miracle claims
 - Do NOT claim celebrity endorsements unless provided in input
 
 Return in this format:
 
 SCRIPT:
-[the full TikTok script in {language} — 30-40 words MAX, short, punchy, natural pace]
+[the full TikTok script in {language} — 30-40 words MAX, short, punchy]
 
 CTA:
-[call-to-action in {language} with #ad — direct to TikTok Shop search, NOT "link sa bio"]
+[comment-based CTA with #ad — e.g. "Comment INFO kung gusto niyo rin ito! #ad"]
+
+ENGAGEMENT QUESTION:
+[a "this or that" question to drive comments — e.g. "Pula o asul, alin mas mabilis? 👇" or "Pang regalo o pang collection? 😂"]
 
 HASHTAGS:
-[5-8 relevant TikTok hashtags including #ad]
+[5-8 relevant tags including #ad #ToysPH #DiecastPH #BudolFinds #GiftIdeasPH]
 """
 
     return call_claude(prompt)
