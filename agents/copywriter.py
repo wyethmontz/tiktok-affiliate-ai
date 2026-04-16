@@ -43,6 +43,7 @@ Requirements:
 - Only describe what the product actually does based on the input provided
 - Do NOT mention specific store names (Toy Kingdom, SM, etc.) — keep it general
 - Do NOT read product specs like a listing (no "1:36 scale alloy model") — describe it naturally like a person would
+- Do NOT use apostrophe contractions like 'to, 'yan, 'yung, 'di — write the full word instead: ito, iyan, iyong, hindi. The voiceover AI pauses awkwardly on apostrophes.
 
 HOOK VARIETY (CRITICAL — use a DIFFERENT style each time):
 - Reaction: "Grabe ang ganda nito!" / "Wait, legit ba 'to?!"
