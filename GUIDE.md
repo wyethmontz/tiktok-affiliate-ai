@@ -57,22 +57,35 @@ Before your first post, you only need 3 things done:
 - **Alternative:** Send the MP4 to yourself on Telegram/Messenger > save to phone
 - **USB:** Connect phone to PC > copy file to phone
 
-**Step 5: Post to TikTok (on your phone)**
-1. Open TikTok app
-2. Tap **+** (bottom center)
-3. Tap **Upload** (bottom right)
-4. Select the MP4 from your camera roll
-5. Tap **Next** — trim if needed (usually no trimming needed)
-6. **Paste the caption** you copied from the app
-7. Tap **More options (...)** at the bottom
-8. Turn ON **"AI-generated content"** toggle (REQUIRED)
-9. Tap **Post**
+**Step 5: Post to TikTok**
+
+You can post from **mobile app** or **TikTok Web Studio** (www.tiktok.com/tiktokstudio).
+
+1. Tap **+** > **Upload** > select the MP4
+2. **Description:** Paste the TikTok Caption from the app (click "Copy Caption")
+3. **Location:** Leave blank
+4. **When to post:** Select **Schedule** and pick the time:
+   - Video 1: **12:00 PM** PHT
+   - Video 2: **6:00 PM** PHT
+   - Video 3: **9:00 PM** PHT
+5. **Who can watch:** Everyone
+6. **High-quality uploads:** ON
+7. **Allow users to:**
+   - Comment: **ON** (engagement boosts algorithm)
+   - Reuse of content: **ON** (lets others Duet/Stitch = free exposure)
+8. **Disclose post content:** **ON** (you're promoting a product)
+   - Check **"Your brand"**
+   - Leave "Branded content" unchecked
+9. **AI-generated content:** **ON** (REQUIRED — our video is AI-generated)
+10. **Music copyright check:** ON (should show "No issues found")
+11. **Content check lite:** ON (should show "No issues found")
+12. Tap **Schedule** (or **Post** if posting now)
 
 **Step 6: After posting**
 - Reply to every comment within the first hour
 - Don't delete the video even if it gets 0 views
 - Generate your next video for a different product
-- Post again at the next peak time
+- Post again at the next scheduled time
 
 **Then post your first video at the right time:**
 
