@@ -41,6 +41,17 @@ Requirements:
 - Do NOT fabricate testimonials, reviews, or fake social proof
 - Do NOT use fake urgency like "mauubos na" or "limited stocks" unless the user said so
 - Only describe what the product actually does based on the input provided
+- Do NOT mention specific store names (Toy Kingdom, SM, etc.) — keep it general
+- Do NOT read product specs like a listing (no "1:36 scale alloy model") — describe it naturally like a person would
+
+HOOK VARIETY (CRITICAL — use a DIFFERENT style each time):
+- Reaction: "Grabe ang ganda nito!" / "Wait, legit ba 'to?!"
+- Question: "Alam niyo ba yung toy na trending ngayon?"
+- Storytime: "Anak ko kinulit ako para dito..."
+- Discovery: "Guys check niyo 'to!"
+- Challenge: "Hanap kayo nito sa mall, wala!"
+- Show-off: "Tignan niyo yung details ng toy na 'to..."
+Do NOT always use "POV:" or "Naghahanap ka" — pick a different style each time.
 
 COMPLIANCE (REQUIRED):
 - The CTA MUST include #ad or "ad" disclosure for affiliate transparency
