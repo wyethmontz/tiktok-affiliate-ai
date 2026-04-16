@@ -343,7 +343,7 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 "-i", audio_path,
                 "-i", bgm_path,
                 "-filter_complex",
-                "[1:a]volume=1.0[voice];[2:a]volume=0.3[music];[voice][music]amix=inputs=2:duration=shortest[out]",
+                "[1:a]adelay=500|500,volume=1.0[voice];[2:a]volume=0.3[music];[voice][music]amix=inputs=2:duration=shortest[out]",
                 "-map", "0:v",
                 "-map", "[out]",
                 "-c:v", "copy",
@@ -401,7 +401,7 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 if audio_end > 0 and abs(audio_end - video_duration) > 0.5:
                     scale = video_duration / audio_end
                     scaled_timestamps = [
-                        {"word": w["word"], "start": w["start"] * scale, "end": w["end"] * scale}
+                        {"word": w["word"], "start": (w["start"] * scale) + 0.5, "end": (w["end"] * scale) + 0.5}
                         for w in word_timestamps
                     ]
                     print(f"[VIDEO] Scaled captions from {audio_end:.1f}s to {video_duration:.1f}s")
