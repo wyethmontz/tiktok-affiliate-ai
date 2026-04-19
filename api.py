@@ -10,6 +10,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from workflows.ad_pipeline import run_pipeline
+from workflows.regenerate_video import run_regenerate_pipeline
 from core.db import save_ad, supabase
 from core.job_store import jobs
 from core.analytics import get_summary
@@ -94,6 +95,21 @@ def _run_job(job_id: str, input_data: dict):
         jobs.fail_job(job_id, str(e))
 
 
+def _run_regenerate_job(job_id: str, ad_id: str):
+    """Background task that regenerates the video for an existing ad."""
+    try:
+        result = run_regenerate_pipeline(
+            ad_id,
+            on_step=lambda step: jobs.update_step(job_id, step),
+        )
+        if isinstance(result, dict) and "error" in result:
+            jobs.fail_job(job_id, result["error"])
+        else:
+            jobs.complete_job(job_id, result)
+    except Exception as e:
+        jobs.fail_job(job_id, str(e))
+
+
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -166,6 +182,15 @@ def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTas
     job_id = jobs.create_job(input_data)
     background_tasks.add_task(_run_job, job_id, input_data)
 
+    return {"job_id": job_id, "status": "pending"}
+
+
+@app.post("/regenerate-video/{ad_id}")
+@limiter.limit("5/minute")
+def regenerate_video(request: Request, ad_id: str, background_tasks: BackgroundTasks):
+    """Regenerate video for an existing ad — reuses approved script, only redoes visuals."""
+    job_id = jobs.create_job({"ad_id": ad_id, "action": "regenerate"})
+    background_tasks.add_task(_run_regenerate_job, job_id, ad_id)
     return {"job_id": job_id, "status": "pending"}
 
 

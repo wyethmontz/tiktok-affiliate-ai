@@ -384,6 +384,9 @@ def run_pipeline(input_data, on_step=None):
         "video_url": video_url,
     }
 
-    save_ad(final_payload)
+    # Save and include the returned ID so frontend can regenerate
+    response = save_ad(final_payload)
+    if response and response.data and len(response.data) > 0:
+        final_payload["id"] = response.data[0].get("id")
 
     return final_payload

@@ -17,6 +17,7 @@ export default function Home() {
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [pasteUrl, setPasteUrl] = useState("");
   const [result, setResult] = useState<Record<string, string> | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("");
   const [error, setError] = useState("");
@@ -211,6 +212,20 @@ export default function Home() {
       setCaptionCopied(true);
       setTimeout(() => setCaptionCopied(false), 2000);
     }
+  }
+
+  async function regenerateVideo() {
+    if (!result?.id) return;
+    setRegenerating(true);
+    setCurrentStep("Regenerating video...");
+    try {
+      const res = await axios.post(`${API_URL}/regenerate-video/${result.id}`);
+      await pollJob(res.data.job_id);
+    } catch {
+      setError("Failed to regenerate video.");
+    }
+    setRegenerating(false);
+    setCurrentStep("");
   }
 
   return (
@@ -507,13 +522,23 @@ export default function Home() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-semibold text-gray-400">TikTok Video</h3>
-                  <a
-                    href={result.video_url}
-                    download="tiktok-ad.mp4"
-                    className="text-xs bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg transition-colors"
-                  >
-                    Download MP4
-                  </a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={regenerateVideo}
+                      disabled={regenerating || !result.id}
+                      className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 text-white px-3 py-1 rounded-lg transition-colors"
+                      title="Keep same script, regenerate scenes & video"
+                    >
+                      {regenerating ? "Regenerating..." : "Regenerate Video"}
+                    </button>
+                    <a
+                      href={result.video_url}
+                      download="tiktok-ad.mp4"
+                      className="text-xs bg-pink-600 hover:bg-pink-500 text-white px-3 py-1 rounded-lg transition-colors"
+                    >
+                      Download MP4
+                    </a>
+                  </div>
                 </div>
                 <video
                   controls
