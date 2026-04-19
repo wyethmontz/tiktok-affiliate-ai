@@ -345,34 +345,39 @@ def run_pipeline(input_data, on_step=None):
     if "#aigenerated" not in {t.lower() for t in unique_tags}:
         unique_tags.append("#AIgenerated")
 
-    # Detect category from product name and pick relevant hashtags
+    # Detect category from product name and pick specific hashtags
     product_lower = input_data.get("product", "").lower()
-    category_tags = ["#ToysPH", "#TikTokShopPH", "#BudolFinds"]  # always safe
+    specific_tags = []
 
     if any(k in product_lower for k in ["anime", "naruto", "one piece", "dragon ball", "luffy",
                                           "tanjiro", "zenitsu", "nezuko", "goku", "demon slayer",
                                           "jujutsu", "gojo", "pokemon", "my hero", "itachi", "sasuke",
                                           "figure", "action figure"]):
-        category_tags += ["#AnimePH", "#FigureCollectorPH"]
+        specific_tags = ["#AnimePH", "#FigureCollectorPH"]
     elif any(k in product_lower for k in ["car", "suv", "truck", "die-cast", "diecast",
                                            "lightning mcqueen", "land rover", "vehicle"]):
-        category_tags += ["#DiecastPH", "#ToyCarPH"]
+        specific_tags = ["#DiecastPH", "#ToyCarPH"]
     elif any(k in product_lower for k in ["plush", "plushie", "stuffed", "sanrio", "hello kitty",
                                            "cinnamoroll", "kuromi", "teddy", "bear"]):
-        category_tags += ["#PlushiePH", "#SanrioPH"]
+        specific_tags = ["#PlushiePH", "#SanrioPH"]
     elif any(k in product_lower for k in ["building", "blocks", "lego", "construction set",
                                             "warship", "tank"]):
-        category_tags += ["#BuildingBlocks", "#BuildingToys"]
+        specific_tags = ["#BuildingBlocks", "#BuildingToys"]
     elif any(k in product_lower for k in ["squishy", "fidget", "pop it", "stress", "slime"]):
-        category_tags += ["#FidgetToys", "#StressRelief"]
+        specific_tags = ["#FidgetToys", "#StressRelief"]
+    else:
+        specific_tags = ["#ToysPH", "#BudolFinds"]
 
-    # Inject category-specific tags if missing
-    for tag in category_tags:
-        if tag.lower() not in seen:
-            unique_tags.insert(1, tag)
-            seen.add(tag.lower())
+    # Build final 5-tag set: #ad + 2 specific + 1 PH + #AIgenerated
+    final_tags = ["#ad"]
+    for tag in specific_tags[:2]:
+        final_tags.append(tag)
+    # Add #BudolFinds as the 4th tag (unless already in specific_tags)
+    if "#budolfinds" not in {t.lower() for t in final_tags}:
+        final_tags.append("#BudolFinds")
+    final_tags.append("#AIgenerated")
 
-    hashtags = " ".join(unique_tags)
+    hashtags = " ".join(final_tags)
 
     # Build caption: CTA + engagement question + hashtags
     cta_clean = re.sub(r'#\w+', '', cta_text).strip()
