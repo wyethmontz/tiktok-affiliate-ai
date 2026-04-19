@@ -95,7 +95,7 @@ Write-Host ""
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host " READY — MOBILE ACCESS ENABLED" -ForegroundColor Green
 Write-Host "==================================================" -ForegroundColor Green
-Write-Host " Frontend URL (open on phone): $FrontendUrl" -ForegroundColor Cyan
+Write-Host " Frontend URL - open on phone: $FrontendUrl" -ForegroundColor Cyan
 Write-Host " Backend URL: $BackendUrl" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host ""
@@ -105,7 +105,7 @@ Write-Host "Press Ctrl+C to stop everything." -ForegroundColor Red
 # Copy frontend URL to clipboard for convenience
 try {
     Set-Clipboard -Value $FrontendUrl
-    Write-Host "(Frontend URL copied to clipboard)" -ForegroundColor Green
+    Write-Host "Frontend URL copied to clipboard" -ForegroundColor Green
 } catch {}
 
 # Keep running until killed
