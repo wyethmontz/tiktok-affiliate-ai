@@ -94,6 +94,15 @@ $env:NEXT_PUBLIC_API_URL = $BackendUrl
 Write-Host "Rebuilding frontend with new API URL..." -ForegroundColor Yellow
 docker-compose up --build -d frontend
 
+# Update Google Sheet with tunnel URL for easy mobile access
+Write-Host "Writing URL to Google Sheet (Mobile Access tab)..." -ForegroundColor Yellow
+try {
+    python "$ProjectRoot\scripts\update_tunnel_url.py" $FrontendUrl $BackendUrl
+    Write-Host "Open the Mobile Access tab in your Google Sheet to get the URL on phone" -ForegroundColor Green
+} catch {
+    Write-Host "Could not update sheet (skipping): $_" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host " READY - MOBILE ACCESS ENABLED" -ForegroundColor Green
