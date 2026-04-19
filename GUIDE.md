@@ -83,6 +83,38 @@ Must use mobile app to add the yellow basket (affiliate product link). PC Web St
 - Update Google Sheet (Status = Posted)
 - Generate next video for next time slot
 
+---
+
+### Mobile Access (access the tool from your phone)
+
+Avoid the phone→PC→phone transfer hassle by running the tool from your phone browser using Cloudflare Tunnel (free).
+
+**One-time setup:**
+1. Download `cloudflared.exe` from https://github.com/cloudflare/cloudflared/releases/latest
+2. Put it in `C:\Windows\System32\` or any folder in your PATH
+
+**Daily usage:**
+1. On your PC, run:
+   ```powershell
+   .\scripts\start_tunnel.ps1
+   ```
+2. Script auto-starts both tunnels (frontend + backend) and updates the frontend config
+3. Copy the **FRONTEND URL** it prints (e.g., `https://random-name.trycloudflare.com`)
+4. Rebuild Docker once: `docker-compose up --build`
+5. Open the frontend URL on your phone
+
+**Now you can:**
+- Find product on TikTok mobile → long-press image → Save
+- Open tool in phone browser → drag-drop or paste image
+- Generate video on pipeline
+- Video saves to phone
+- Upload to TikTok on same phone → link yellow basket
+- Never touch PC during posting
+
+**Catch:** URLs change every time you restart the tunnel. Just rerun the script + rebuild Docker.
+
+**Keep the script window open** — closing it kills the tunnels.
+
 **Then post your first video at the right time:**
 
 | Time (PHT) | Priority |
