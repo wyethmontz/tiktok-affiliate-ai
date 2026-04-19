@@ -88,6 +88,9 @@ if (Test-Path $EnvFile) {
     Set-Content -Path $EnvFile -Value "NEXT_PUBLIC_API_URL=$BackendUrl"
 }
 
+# Set env for docker-compose to pick up the backend tunnel URL
+$env:NEXT_PUBLIC_API_URL = $BackendUrl
+
 Write-Host "Rebuilding frontend with new API URL..." -ForegroundColor Yellow
 docker-compose up --build -d frontend
 
