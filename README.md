@@ -162,6 +162,22 @@ tiktok-affiliate-ai/
 |-- Dockerfile                 # Backend container
 ```
 
+## Database Auto-Cleanup
+
+The pipeline automatically manages Supabase storage to stay under the 1GB free tier:
+
+- **Auto-cleanup on every generation** — when a new ad is saved, ads older than **7 days** are automatically deleted
+- **Manual cleanup scripts** (in `scripts/`):
+  - `check_images.py` — scan DB for broken image URLs (localhost, expired)
+  - `cleanup_supabase.py` — delete broken URLs + ads older than 7 days
+
+```bash
+python scripts/check_images.py      # see what's broken
+python scripts/cleanup_supabase.py  # delete broken + old ads
+```
+
+**Why 7 days?** Replicate image URLs expire after 1 hour, so older ads have broken images anyway. Keeping 7 days of history is plenty for reviewing recent performance before posting.
+
 ## Roadmap
 
 - [ ] AI video generation (Kling/Runway) — turn scenes into TikTok-ready video clips
