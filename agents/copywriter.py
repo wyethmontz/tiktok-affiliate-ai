@@ -56,8 +56,8 @@ Do NOT always use "POV:" or "Naghahanap ka" — pick a different style each time
 
 COMPLIANCE (REQUIRED):
 - The CTA MUST include #ad disclosure
-- Do NOT say "link sa bio" or "link in bio" — there is no link yet
-- Use comment-based CTAs like: "Comment INFO kung gusto niyo rin ito! #ad" or "Comment TOY para ma-send ko link! #ad"
+- Use TikTok Shop basket CTAs like: "Tap the yellow basket below! #ad" or "I-tap yung basket sa baba! #ad" or "Check the basket for link! #ad"
+- User has TikTok Shop Affiliate access — products are linked directly via basket icon
 - Do NOT make health, medical, or miracle claims
 - Do NOT claim celebrity endorsements unless provided in input
 
