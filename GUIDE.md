@@ -15,77 +15,73 @@ Before your first post, you only need 3 things done:
 
 ### Full Video Creation Process (Step by Step)
 
-**Step 1: Find a product to promote**
-- Open TikTok Shop (in TikTok app > Shop tab) and browse trending toys
-- Or open Shopee/Lazada and look at bestsellers in Toys category
-- Pick something under 500 PHP (impulse buy range)
-- Pick something visually interesting — colorful, unique, or trending
-
-**Step 2: Get the product image**
-- On TikTok Shop: tap the product > screenshot the main product photo
-- On Shopee: tap the product > long-press the image > Save image
-- On Lazada: same — save the main product listing image
-- From Google: search the product name > Images > save one with clean white background
-- Your own photo: place the toy on a white table, take a photo with good lighting
+**Step 1: Find affiliate product (MOBILE)**
+- Open TikTok app → Profile → Creator Tools (or TikTok Studio) → **Affiliate**
+- Tap **Find Products** or **Marketplace**
+- Filters:
+  - Category: Toys & Hobbies
+  - Commission rate: **15% and up**
+  - 4+ stars, 100+ sold
+- Tap a product you want to promote
+- **Long-press the main product image → Save image** (or copy image URL)
+- Note the product name too
 
 **Best product photo for AI:**
 - Single product, not multiple items
 - Clean background (white or plain)
 - Well-lit, sharp focus, not blurry
-- Shows the full product (not cropped or cut off)
+- Shows the full product (not cropped)
 
-**Step 3: Generate the video on your PC**
+**Alternative sources:**
+- Shopee/Lazada listings (single-product images, white bg)
+- Your own photo on a white table
+
+**Step 2: Generate the video (PC — localhost:3000)**
 1. Make sure Docker is running (`docker-compose up`)
 2. Open `http://localhost:3000`
-3. Type the product name — be specific (e.g., `Lightning McQueen Sky Blue Custom Edition` not just `car toy`)
+3. Type the product name — be specific (5-8 words, e.g., `Cute Tanjiro Demon Slayer Action Figure Poseable`)
 4. Click **"+ Add product images"**
-5. Either:
-   - **Drag & drop** the saved image from your desktop
-   - **Paste a URL** from the product listing page
-   - **Paste a Google Drive link** (make sure sharing is set to "Anyone with the link")
-6. Click **"Generate TikTok Ad"**
-7. Wait ~2-3 minutes (you'll see progress steps)
-8. Review the result:
+5. Drag & drop the saved image OR paste the image URL
+6. Click **"Generate TikTok Ad"** (~3 minutes)
+7. Review the result:
    - Compliance badge should be **green** (TikTok Compliant)
    - Watch the video — check the images look good
-   - Listen to voiceover — should match the captions
-9. Click **"Download MP4"** to save the video
-10. Click **"Copy Caption"** to copy the TikTok caption
+   - If scenes look bad, click **"Regenerate Video"** (keeps script, redoes visuals only)
+8. Click **"Download MP4"** to save
+9. Click **"Copy Caption"** to copy the caption
 
-**Step 4: Transfer video to your phone**
-- **Fastest:** Upload MP4 to Google Drive > open Drive on phone > download to camera roll
-- **Alternative:** Send the MP4 to yourself on Telegram/Messenger > save to phone
-- **USB:** Connect phone to PC > copy file to phone
+**Step 3: Transfer video to phone**
+- **Fastest:** Upload MP4 to Google Drive → open Drive on phone → download
+- **Alternative:** Send MP4 to yourself on Telegram/Messenger → save to phone
 
-**Step 5: Post to TikTok**
+**Step 4: Post to TikTok (MOBILE — required for affiliate link)**
 
-You can post from **mobile app** or **TikTok Web Studio** (www.tiktok.com/tiktokstudio).
+Must use mobile app to add the yellow basket (affiliate product link). PC Web Studio cannot add product links.
 
-1. Tap **+** > **Upload** > select the MP4
+1. Tap **+** → **Upload** → select the MP4
 2. **Description:** Paste the TikTok Caption from the app (click "Copy Caption")
-3. **Location:** Leave blank
-4. **When to post:** Select **Schedule** and pick the time:
-   - Video 1: **12:00 PM** PHT
-   - Video 2: **6:00 PM** PHT
-   - Video 3: **9:00 PM** PHT
-5. **Who can watch:** Everyone
-6. **High-quality uploads:** ON
+3. **Add product link (yellow basket):**
+   - Tap **Add link** or basket icon
+   - Search for the SAME product you picked in Step 1
+   - Select it → basket link appears in video
+4. **Location:** Leave blank
+5. **When to post:** **Schedule** at 12 PM / 6 PM / 9 PM PHT
+6. **Who can watch:** Everyone
 7. **Allow users to:**
-   - Comment: **ON** (engagement boosts algorithm)
-   - Reuse of content: **ON** (lets others Duet/Stitch = free exposure)
-8. **Disclose post content:** **ON** (you're promoting a product)
-   - Check **"Your brand"**
-   - Leave "Branded content" unchecked
-9. **AI-generated content:** **ON** (REQUIRED — our video is AI-generated)
-10. **Music copyright check:** ON (should show "No issues found")
-11. **Content check lite:** ON (should show "No issues found")
-12. Tap **Schedule** (or **Post** if posting now)
+   - Comment: ON
+   - Reuse of content: ON
+8. **Disclose post content:** ON → Check **"Your brand"**
+9. **AI-generated content:** ON (REQUIRED)
+10. **Music copyright check:** ON (should pass)
+11. **Content check lite:** ON (should pass)
+12. Tap **Schedule** (or **Post**)
 
-**Step 6: After posting**
+**Step 5: After posting**
+- Pin a comment: "Tap the yellow basket below! 👇"
 - Reply to every comment within the first hour
-- Don't delete the video even if it gets 0 views
-- Generate your next video for a different product
-- Post again at the next scheduled time
+- Don't delete even if low views
+- Update Google Sheet (Status = Posted)
+- Generate next video for next time slot
 
 **Then post your first video at the right time:**
 
