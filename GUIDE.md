@@ -59,22 +59,47 @@ Before your first post, you only need 3 things done:
 Must use mobile app to add the yellow basket (affiliate product link). PC Web Studio cannot add product links.
 
 1. Tap **+** → **Upload** → select the MP4
-2. **Description:** Paste the TikTok Caption from the app (click "Copy Caption")
+2. **Description:** Paste the TikTok Caption from the app (click "Copy Caption") — only 5 hashtags
 3. **Add product link (yellow basket):**
    - Tap **Add link** or basket icon
-   - Search for the SAME product you picked in Step 1
+   - Search for the SAME product you picked in Step 1 (use the "TikTok Name (30 char)" column from the sheet)
    - Select it → basket link appears in video
 4. **Location:** Leave blank
 5. **When to post:** **Schedule** at 12 PM / 6 PM / 9 PM PHT
 6. **Who can watch:** Everyone
-7. **Allow users to:**
-   - Comment: ON
-   - Reuse of content: ON
-8. **Disclose post content:** ON → Check **"Your brand"**
-9. **AI-generated content:** ON (REQUIRED)
-10. **Music copyright check:** ON (should pass)
-11. **Content check lite:** ON (should pass)
-12. Tap **Schedule** (or **Post**)
+
+**Disclosure and ads settings (with affiliate basket):**
+| Setting | Toggle |
+|---------|--------|
+| Disclose commercial content | **ON** |
+| Your brand | **UNCHECKED** (you're not promoting your own business) |
+| Branded content | **CHECKED** (you're promoting seller's product) |
+| Ad authorization | OFF |
+| Only show as ads | OFF |
+| AI-generated content | **ON** (REQUIRED) |
+
+**Allow users to:**
+| Setting | Toggle |
+|---------|--------|
+| Allow comments | **ON** (engagement = algorithm boost) |
+| Allow reuse of content (Duet/Stitch) | **ON** (free exposure) |
+| Allow AI to remix content | **ON** (more reach) |
+
+**More options:**
+| Setting | Toggle |
+|---------|--------|
+| Allow visual search | **ON** (people find products through search) |
+| Allow high-quality uploads | **ON** |
+| Post as template | **ON** (others remix = more views) |
+| Save to device | **OFF** (already have MP4) |
+| Save posts with watermark | **OFF** |
+| Audience controls (18+) | **OFF** (toys aren't 18+) |
+
+**Content checks:**
+- Music copyright check: should pass (we use royalty-free Pixabay)
+- Content check lite: should pass
+
+Tap **Schedule** (or **Post**)
 
 **Step 5: After posting**
 - Pin a comment: "Tap the yellow basket below! 👇"
