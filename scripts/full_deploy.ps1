@@ -93,13 +93,13 @@ docker-compose up --build -d frontend
 
 Write-Host ""
 Write-Host "==================================================" -ForegroundColor Green
-Write-Host " READY — MOBILE ACCESS ENABLED" -ForegroundColor Green
+Write-Host " READY - MOBILE ACCESS ENABLED" -ForegroundColor Green
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host " Frontend URL - open on phone: $FrontendUrl" -ForegroundColor Cyan
 Write-Host " Backend URL: $BackendUrl" -ForegroundColor Cyan
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Keep this window open — closing kills tunnels." -ForegroundColor Red
+Write-Host "Keep this window open - closing kills tunnels." -ForegroundColor Red
 Write-Host "Press Ctrl+C to stop everything." -ForegroundColor Red
 
 # Copy frontend URL to clipboard for convenience
