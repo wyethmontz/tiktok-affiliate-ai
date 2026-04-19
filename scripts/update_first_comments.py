@@ -38,29 +38,32 @@ for i, row in enumerate(records):
     first_comment = row[8] if len(row) > 8 else ""
     current_tiktok_name = row[9] if len(row) > 9 else ""
 
-    # 1. UPDATE FIRST COMMENT (if caption exists but comment is empty)
-    if caption.strip() and not first_comment.strip():
+    # 1. UPDATE FIRST COMMENT (basket-aware — reinforces product + asks engagement question)
+    # Regenerate if caption exists and comment is empty OR still uses old "Comment X for link" style
+    needs_update = caption.strip() and (
+        not first_comment.strip() or
+        "para sa link" in first_comment.lower() or
+        "for link" in first_comment.lower() or
+        "para ma-send" in first_comment.lower()
+    )
+    if needs_update:
         lines = [l.strip() for l in caption.split("\n") if l.strip()]
         question = ""
-        cta_keyword = "TOY"
-
         for line in lines:
-            kw_match = re.search(r'[Cc]omment\s+(\w+)', line)
-            if kw_match:
-                cta_keyword = kw_match.group(1).upper()
             if "?" in line and not line.startswith("#"):
                 question = line
+                break
 
         if question:
+            # Clean trailing emojis, keep question clear
             clean_q = re.sub(r'[\U0001f447\U0001f923\U0001f602\U0001f60d\U0001f525]+\s*$', '', question).strip()
-            first_comment_text = f"{clean_q} Comment {cta_keyword} para sa link! \U0001f447"
+            first_comment_text = f"{clean_q} Tap the basket sa baba \U0001f447"
         else:
-            cta_line = lines[0] if lines else caption[:50]
-            cta_clean = re.sub(r'#\w+', '', cta_line).strip()
-            first_comment_text = f"{cta_clean} \U0001f447"
+            # Fallback: generic basket pointer
+            first_comment_text = "Sulit na sulit ito! Tap the basket sa baba para makita yung deal \U0001f447"
 
         comment_updates.append({'range': f'I{row_num}', 'values': [[first_comment_text]]})
-        print(f"[Comment] Row {row_num}: {first_comment_text[:60]}...")
+        print(f"[Comment] Row {row_num}: {first_comment_text[:70]}...")
 
     # 2. UPDATE TIKTOK NAME (if pipeline input exists and name is wrong/empty)
     if pipeline_input.strip() and not pipeline_input.startswith('['):
