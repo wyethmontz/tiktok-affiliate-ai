@@ -45,7 +45,9 @@ for i, row in enumerate(records):
         "para sa link" in first_comment.lower() or
         "for link" in first_comment.lower() or
         "para ma-send" in first_comment.lower() or
-        "tap the basket sa baba" in first_comment.lower()
+        ("tap the basket" in first_comment.lower() and "yellow" not in first_comment.lower()) or
+        first_comment.strip().endswith("\U0001f447") or
+        "yellow basket" not in first_comment.lower()  # ensure all comments mention yellow basket
     )
     if needs_update:
         lines = [l.strip() for l in caption.split("\n") if l.strip()]
@@ -56,12 +58,13 @@ for i, row in enumerate(records):
                 break
 
         if question:
-            # Clean trailing emojis, keep question clear
-            clean_q = re.sub(r'[\U0001f447\U0001f923\U0001f602\U0001f60d\U0001f525]+\s*$', '', question).strip()
-            first_comment_text = f"{clean_q} \U0001f447"
+            # Clean trailing direction-arrow emojis (direction varies by device)
+            clean_q = re.sub(r'[\U0001f447\U0001f446]+\s*$', '', question).strip()
+            # Ask the engagement question + point to yellow basket above caption
+            first_comment_text = f"{clean_q} Tap the yellow basket \U0001f6d2"
         else:
             # Fallback: generic basket pointer
-            first_comment_text = "Sulit na sulit ito! Check niyo yung basket sa video \U0001f447"
+            first_comment_text = "Sulit na sulit ito! Tap the yellow basket \U0001f6d2"
 
         comment_updates.append({'range': f'I{row_num}', 'values': [[first_comment_text]]})
         print(f"[Comment] Row {row_num}: {first_comment_text[:70]}...")
