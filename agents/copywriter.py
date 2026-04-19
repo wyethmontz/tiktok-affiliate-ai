@@ -73,7 +73,7 @@ ENGAGEMENT QUESTION:
 [a "this or that" question to drive comments — e.g. "Pula o asul, alin mas mabilis? 👇" or "Pang regalo o pang collection? 😂"]
 
 HASHTAGS:
-[5-8 relevant tags including #ad #ToysPH #DiecastPH #BudolFinds #GiftIdeasPH]
+[5-8 relevant tags including #ad and category-specific tags. For anime/figures use #AnimePH #FigureCollectorPH. For cars use #DiecastPH #ToyCarPH. For plushies use #PlushiePH #SanrioPH. For building sets use #BuildingBlocks. Always include #ToysPH #TikTokShopPH #BudolFinds.]
 """
 
     return call_claude(prompt)

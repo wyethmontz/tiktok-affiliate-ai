@@ -345,8 +345,29 @@ def run_pipeline(input_data, on_step=None):
     if "#aigenerated" not in {t.lower() for t in unique_tags}:
         unique_tags.append("#AIgenerated")
 
-    # Inject PH niche tags if missing
-    for tag in ["#ToysPH", "#DiecastPH", "#TikTokShopPH"]:
+    # Detect category from product name and pick relevant hashtags
+    product_lower = input_data.get("product", "").lower()
+    category_tags = ["#ToysPH", "#TikTokShopPH", "#BudolFinds"]  # always safe
+
+    if any(k in product_lower for k in ["anime", "naruto", "one piece", "dragon ball", "luffy",
+                                          "tanjiro", "zenitsu", "nezuko", "goku", "demon slayer",
+                                          "jujutsu", "gojo", "pokemon", "my hero", "itachi", "sasuke",
+                                          "figure", "action figure"]):
+        category_tags += ["#AnimePH", "#FigureCollectorPH"]
+    elif any(k in product_lower for k in ["car", "suv", "truck", "die-cast", "diecast",
+                                           "lightning mcqueen", "land rover", "vehicle"]):
+        category_tags += ["#DiecastPH", "#ToyCarPH"]
+    elif any(k in product_lower for k in ["plush", "plushie", "stuffed", "sanrio", "hello kitty",
+                                           "cinnamoroll", "kuromi", "teddy", "bear"]):
+        category_tags += ["#PlushiePH", "#SanrioPH"]
+    elif any(k in product_lower for k in ["building", "blocks", "lego", "construction set",
+                                            "warship", "tank"]):
+        category_tags += ["#BuildingBlocks", "#BuildingToys"]
+    elif any(k in product_lower for k in ["squishy", "fidget", "pop it", "stress", "slime"]):
+        category_tags += ["#FidgetToys", "#StressRelief"]
+
+    # Inject category-specific tags if missing
+    for tag in category_tags:
         if tag.lower() not in seen:
             unique_tags.insert(1, tag)
             seen.add(tag.lower())
