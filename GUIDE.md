@@ -89,25 +89,43 @@ Must use mobile app to add the yellow basket (affiliate product link). PC Web St
 
 Avoid the phone→PC→phone transfer hassle by running the tool from your phone browser using Cloudflare Tunnel (free).
 
-**One-time setup:**
-1. Download `cloudflared.exe` from https://github.com/cloudflare/cloudflared/releases/latest
-2. Put it in `C:\Windows\System32\` or any folder in your PATH
+**One-time setup — Install cloudflared:**
+
+1. Open https://github.com/cloudflare/cloudflared/releases/latest
+2. Scroll to **Assets**, download **`cloudflared-windows-amd64.exe`**
+3. Open your Downloads folder
+4. Right-click the file → **Rename** → change to `cloudflared.exe`
+5. Open **This PC** → navigate to `C:\Windows\System32\`
+6. Drag `cloudflared.exe` into `System32` (admin prompt → click Continue)
+7. Verify install — open new PowerShell:
+   ```powershell
+   cloudflared --version
+   ```
+   You should see a version number like `2025.x.x`
+
+**One-time setup — Allow PowerShell scripts:**
+
+If PowerShell blocks the tunnel script, run this once:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
 
 **Daily usage:**
 1. On your PC, run:
    ```powershell
+   cd c:\Users\wyethmontana\tiktok-affiliate-ai
    .\scripts\start_tunnel.ps1
    ```
 2. Script auto-starts both tunnels (frontend + backend) and updates the frontend config
 3. Copy the **FRONTEND URL** it prints (e.g., `https://random-name.trycloudflare.com`)
 4. Rebuild Docker once: `docker-compose up --build`
-5. Open the frontend URL on your phone
+5. Open the frontend URL on your phone browser
 
 **Now you can:**
 - Find product on TikTok mobile → long-press image → Save
 - Open tool in phone browser → drag-drop or paste image
 - Generate video on pipeline
-- Video saves to phone
+- Video saves directly to phone
 - Upload to TikTok on same phone → link yellow basket
 - Never touch PC during posting
 
