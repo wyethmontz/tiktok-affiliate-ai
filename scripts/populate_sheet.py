@@ -102,7 +102,7 @@ PLAN = [
     ("2026-05-15", "Day 30", "9:00 PM", "[2nd winner best product]", "[descriptive name]", "", "Apply TikTok Shop Affiliate"),
 ]
 
-HEADER = ["Date", "Day", "Time", "Shopee Search", "Pipeline Input", "Status", "Views", "TikTok Caption", "First Comment", "Notes"]
+HEADER = ["Date", "Day", "Time", "Shopee Search", "Pipeline Input", "Status", "Views", "TikTok Caption", "First Comment", "TikTok Name (30 char)", "Notes"]
 
 # Week colors (RGB)
 WEEK_COLORS = {
@@ -135,10 +135,18 @@ def main():
 
     # Write all rows
     print(f"Writing {len(PLAN)} rows...")
+    def trim_name(name, max_len=30):
+        name = name.strip()
+        if len(name) <= max_len: return name
+        trimmed = name[:max_len].rsplit(' ', 1)[0]
+        return trimmed if trimmed else name[:max_len]
+
     rows = []
     for row in PLAN:
-        # Date, Day, Time, Shopee Search, Pipeline Input, Status, Views, Caption, First Comment, Notes
-        rows.append(list(row[:6]) + ["", "", "", row[6]])
+        # Date, Day, Time, Shopee Search, Pipeline Input, Status, Views, Caption, First Comment, TikTok Name, Notes
+        pipeline_input = row[4]
+        tiktok_name = trim_name(pipeline_input) if not pipeline_input.startswith('[') else ""
+        rows.append(list(row[:6]) + ["", "", "", tiktok_name, row[6]])
     ws.append_rows(rows)
 
     # Batch format everything in one call to avoid rate limits
@@ -147,7 +155,7 @@ def main():
 
     # Header
     formats.append({
-        "range": "A1:J1",
+        "range": "A1:K1",
         "format": {
             "textFormat": {"bold": True, "fontSize": 11},
             "backgroundColor": {"red": 0.2, "green": 0.2, "blue": 0.2},
@@ -167,7 +175,7 @@ def main():
         # Milestone rows get special color
         if day_str in milestone_days and row[2] == "9:00 PM":
             formats.append({
-                "range": f"A{row_num}:J{row_num}",
+                "range": f"A{row_num}:K{row_num}",
                 "format": {
                     "textFormat": {"bold": True},
                     "backgroundColor": {"red": 1, "green": 0.85, "blue": 0.85},
@@ -175,13 +183,13 @@ def main():
             })
         else:
             formats.append({
-                "range": f"A{row_num}:J{row_num}",
+                "range": f"A{row_num}:K{row_num}",
                 "format": {"backgroundColor": color}
             })
 
     ws.batch_format(formats)
     ws.freeze(rows=1)
-    ws.columns_auto_resize(0, 10)
+    ws.columns_auto_resize(0, 11)
 
     print(f"\nDone! Sheet populated with {len(PLAN)} entries.")
     print(f"Open: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
