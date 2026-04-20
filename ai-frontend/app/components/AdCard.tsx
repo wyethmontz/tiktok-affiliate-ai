@@ -31,6 +31,7 @@ export default function AdCard({ ad }: { ad: Ad }) {
 
   const scoreMatch = ad.qa_score?.match(/\d+/);
   const score = scoreMatch ? scoreMatch[0] : "?";
+  const isDiscovery = ad.compliance_status === "DISCOVERY";
 
   const handleReuse = () => {
     localStorage.setItem(
@@ -81,16 +82,24 @@ export default function AdCard({ ad }: { ad: Ad }) {
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="bg-pink-600 text-white text-sm font-bold px-3 py-1 rounded-full">
-            {score}/10
-          </span>
+          {!isDiscovery && (
+            <span className="bg-pink-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+              {score}/10
+            </span>
+          )}
           {ad.compliance_status && (
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
               ad.compliance_status === "PASS"
                 ? "bg-green-600/20 text-green-400"
-                : "bg-red-600/20 text-red-400"
+                : isDiscovery
+                  ? "bg-purple-600/20 text-purple-300"
+                  : "bg-red-600/20 text-red-400"
             }`}>
-              {ad.compliance_status === "PASS" ? "Compliant" : "Issues"}
+              {ad.compliance_status === "PASS"
+                ? "Compliant"
+                : isDiscovery
+                  ? "Discovery"
+                  : "Issues"}
             </span>
           )}
         </div>
@@ -171,29 +180,37 @@ export default function AdCard({ ad }: { ad: Ad }) {
             </div>
           )}
 
-          {/* Script */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-400 mb-1">Script</h4>
-            <p className="text-white whitespace-pre-wrap text-sm">{ad.copy}</p>
-          </div>
+          {/* Script — affiliate only (discovery has no script) */}
+          {!isDiscovery && ad.copy && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-400 mb-1">Script</h4>
+              <p className="text-white whitespace-pre-wrap text-sm">{ad.copy}</p>
+            </div>
+          )}
 
           {/* Positioning */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-400 mb-1">Positioning</h4>
-            <p className="text-white text-sm">{ad.positioning}</p>
-          </div>
+          {ad.positioning && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-400 mb-1">Positioning</h4>
+              <p className="text-white text-sm">{ad.positioning}</p>
+            </div>
+          )}
 
-          {/* Scene Plan */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-400 mb-1">Scene Plan</h4>
-            <p className="text-white whitespace-pre-wrap text-xs">{ad.creative}</p>
-          </div>
+          {/* Scene Plan — affiliate only */}
+          {!isDiscovery && ad.creative && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-400 mb-1">Scene Plan</h4>
+              <p className="text-white whitespace-pre-wrap text-xs">{ad.creative}</p>
+            </div>
+          )}
 
-          {/* QA Score */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-400 mb-1">QA Score</h4>
-            <p className="text-white whitespace-pre-wrap text-xs">{ad.qa_score}</p>
-          </div>
+          {/* QA Score — affiliate only */}
+          {!isDiscovery && ad.qa_score && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-400 mb-1">QA Score</h4>
+              <p className="text-white whitespace-pre-wrap text-xs">{ad.qa_score}</p>
+            </div>
+          )}
 
           {/* All Images */}
           {ad.images && (

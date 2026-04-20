@@ -27,6 +27,7 @@ export default function Home() {
   const [dragOverVideo, setDragOverVideo] = useState(false);
   const [useAiVideo, setUseAiVideo] = useState(false);
   const [bgmStyle] = useState("happy");
+  const [postStyle, setPostStyle] = useState<"affiliate" | "cinematic">("affiliate");
 
   useEffect(() => {
     const saved = localStorage.getItem("reuse_ad");
@@ -197,6 +198,7 @@ export default function Home() {
         user_video_urls: videoUrls,
         use_ai_video: useAiVideo,
         bgm_style: bgmStyle,
+        style: postStyle,
       });
       await pollJob(res.data.job_id);
     } catch {
@@ -234,6 +236,46 @@ export default function Home() {
       <p className="text-gray-400 mb-8">Drop your product + images, AI handles the rest</p>
 
       <div className="flex flex-col gap-4 mb-6">
+        {/* Post Type Selector */}
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Post type</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setPostStyle("affiliate")}
+              className={`text-left rounded-lg border p-3 transition-colors ${
+                postStyle === "affiliate"
+                  ? "border-pink-500 bg-pink-500/10"
+                  : "border-gray-700 bg-gray-800 hover:border-gray-600"
+              }`}
+            >
+              <div className="text-sm font-semibold text-white">Basket Post (Affiliate)</div>
+              <div className="text-xs text-gray-400 mt-1">
+                Script + voiceover + #ad. Attach basket for conversion.
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPostStyle("cinematic")}
+              className={`text-left rounded-lg border p-3 transition-colors ${
+                postStyle === "cinematic"
+                  ? "border-purple-500 bg-purple-500/10"
+                  : "border-gray-700 bg-gray-800 hover:border-gray-600"
+              }`}
+            >
+              <div className="text-sm font-semibold text-white">Discovery Post (No Basket)</div>
+              <div className="text-xs text-gray-400 mt-1">
+                Cinematic silent video + engagement caption. Builds reach.
+              </div>
+            </button>
+          </div>
+          {postStyle === "cinematic" && (
+            <p className="text-xs text-purple-300/80 mt-2">
+              Requires 1 product photo. No voiceover, no #ad — feeds the general FYP algorithm.
+            </p>
+          )}
+        </div>
+
         <input
           placeholder="What are you promoting? (e.g. Cute LED Night Light, Lip Tint Set)"
           value={product}
@@ -334,7 +376,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Video Clips — Drag & Drop */}
+        {/* Video Clips — Drag & Drop (affiliate only; cinematic uses nano-banana scenes) */}
+        {postStyle === "affiliate" && (
         <div>
           <button
             type="button"
@@ -401,29 +444,41 @@ export default function Home() {
             </div>
           )}
         </div>
+        )}
 
-        {/* Background Music */}
-        <div className="flex items-center gap-3 text-sm text-gray-400">
-          Happy ukulele background music (free, no copyright)
-        </div>
+        {/* Background Music + AI video toggle — hidden in cinematic (silent + always Wan 2.2 Fast) */}
+        {postStyle === "affiliate" && (
+          <>
+            <div className="flex items-center gap-3 text-sm text-gray-400">
+              Happy ukulele background music (free, no copyright)
+            </div>
 
-        {/* AI Video Toggle */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <div className={`relative w-10 h-5 rounded-full transition-colors ${useAiVideo ? 'bg-purple-600' : 'bg-gray-700'}`}
-               onClick={() => setUseAiVideo(!useAiVideo)}>
-            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
-          </div>
-          <span className="text-sm text-gray-400">
-            {useAiVideo ? "AI motion video ON (~$1-2/ad)" : "Free video mode (CapCut-style editing)"}
-          </span>
-        </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div className={`relative w-10 h-5 rounded-full transition-colors ${useAiVideo ? 'bg-purple-600' : 'bg-gray-700'}`}
+                   onClick={() => setUseAiVideo(!useAiVideo)}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              </div>
+              <span className="text-sm text-gray-400">
+                {useAiVideo ? "AI motion video ON (~$1-2/ad)" : "Free video mode (CapCut-style editing)"}
+              </span>
+            </label>
+          </>
+        )}
 
         <button
           onClick={generateAd}
-          disabled={loading || !product.trim()}
-          className="bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          disabled={loading || !product.trim() || (postStyle === "cinematic" && imageUrls.length === 0)}
+          className={`font-semibold py-3 px-6 rounded-lg transition-colors text-white ${
+            postStyle === "cinematic"
+              ? "bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600"
+              : "bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600"
+          }`}
         >
-          {loading ? "Generating..." : "Generate TikTok Ad"}
+          {loading
+            ? "Generating..."
+            : postStyle === "cinematic"
+              ? "Generate Discovery Post"
+              : "Generate TikTok Ad"}
         </button>
       </div>
 
@@ -462,9 +517,15 @@ export default function Home() {
                 <span className={`text-sm font-bold px-3 py-1 rounded-full ${
                   result.compliance_status === "PASS"
                     ? "bg-green-600 text-white"
-                    : "bg-red-600 text-white"
+                    : result.compliance_status === "DISCOVERY"
+                      ? "bg-purple-600 text-white"
+                      : "bg-red-600 text-white"
                 }`}>
-                  {result.compliance_status === "PASS" ? "TikTok Compliant" : "Compliance Issues"}
+                  {result.compliance_status === "PASS"
+                    ? "TikTok Compliant"
+                    : result.compliance_status === "DISCOVERY"
+                      ? "Discovery Post"
+                      : "Compliance Issues"}
                 </span>
               )}
             </div>
@@ -484,10 +545,12 @@ export default function Home() {
               <p className="text-white">{result.positioning}</p>
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-1">TikTok Script</h3>
-              <p className="text-white whitespace-pre-wrap">{result.copy}</p>
-            </div>
+            {result.compliance_status !== "DISCOVERY" && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-1">TikTok Script</h3>
+                <p className="text-white whitespace-pre-wrap">{result.copy}</p>
+              </div>
+            )}
 
             {/* TikTok Caption — Copy-Paste Ready */}
             {result.tiktok_caption && (
@@ -507,15 +570,19 @@ export default function Home() {
               </div>
             )}
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-1">Scene Plan</h3>
-              <p className="text-white whitespace-pre-wrap">{result.creative}</p>
-            </div>
+            {result.creative && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-1">Scene Plan</h3>
+                <p className="text-white whitespace-pre-wrap">{result.creative}</p>
+              </div>
+            )}
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-1">QA Score</h3>
-              <p className="text-white whitespace-pre-wrap">{result.qa_score}</p>
-            </div>
+            {result.qa_score && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-1">QA Score</h3>
+                <p className="text-white whitespace-pre-wrap">{result.qa_score}</p>
+              </div>
+            )}
 
             {/* TikTok Video */}
             {result.video_url && (
@@ -577,10 +644,12 @@ export default function Home() {
               </div>
             )}
 
-            <div>
-              <h3 className="text-sm font-semibold text-gray-400 mb-1">Image Prompts</h3>
-              <p className="text-white whitespace-pre-wrap text-sm">{result.media}</p>
-            </div>
+            {result.media && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-1">Image Prompts</h3>
+                <p className="text-white whitespace-pre-wrap text-sm">{result.media}</p>
+              </div>
+            )}
           </div>
         </div>
       )}

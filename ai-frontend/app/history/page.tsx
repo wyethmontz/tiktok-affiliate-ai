@@ -23,10 +23,13 @@ type Ad = {
   created_at: string;
 };
 
+type PostTypeFilter = "all" | "affiliate" | "discovery";
+
 export default function HistoryPage() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [typeFilter, setTypeFilter] = useState<PostTypeFilter>("all");
 
   const fetchAds = useCallback(async (search = "") => {
     try {
@@ -52,8 +55,32 @@ export default function HistoryPage() {
         <p className="text-gray-400">All your previously generated ads</p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <SearchBar onSearch={fetchAds} />
+      </div>
+
+      {/* Post type filter pills */}
+      <div className="mb-6 flex gap-2">
+        {(["all", "affiliate", "discovery"] as PostTypeFilter[]).map((t) => {
+          const active = typeFilter === t;
+          const label = t === "all" ? "All" : t === "affiliate" ? "Affiliate" : "Discovery";
+          const activeColor =
+            t === "discovery" ? "bg-purple-600" : t === "affiliate" ? "bg-pink-600" : "bg-gray-600";
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTypeFilter(t)}
+              className={`text-sm px-4 py-1.5 rounded-full border transition-colors ${
+                active
+                  ? `${activeColor} border-transparent text-white`
+                  : "bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {loading && (
@@ -71,9 +98,16 @@ export default function HistoryPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {ads.map((ad) => (
-          <AdCard key={ad.id} ad={ad} />
-        ))}
+        {ads
+          .filter((ad) => {
+            if (typeFilter === "all") return true;
+            if (typeFilter === "discovery") return ad.compliance_status === "DISCOVERY";
+            // "affiliate" = anything that isn't a discovery post
+            return ad.compliance_status !== "DISCOVERY";
+          })
+          .map((ad) => (
+            <AdCard key={ad.id} ad={ad} />
+          ))}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import json
 import re
 from agents.strategist import run_strategist
 from agents.copywriter import run_copywriter
+from agents.discovery_copywriter import run_discovery_copywriter
 from agents.creative import run_creative
 from agents.qa import run_qa
 from agents.media import run_media
@@ -10,6 +11,8 @@ from agents.optimizer import run_optimizer
 from core.db import save_ad, supabase
 from core.image_gen import generate_images
 from core.product_scenes import generate_product_scenes
+from core.cinematic_scenes import generate_cinematic_scenes
+from core.cinematic_video import generate_cinematic_clips
 from core.policy_checker import get_latest_rules
 from core.video_gen import generate_video_clips
 from core.voiceover import generate_voiceover
@@ -17,6 +20,36 @@ from core.llm import call_claude
 from core.video_assembler import assemble_video
 
 MAX_COMPLIANCE_RETRIES = 4
+
+
+def _detect_product_type(product_name: str) -> str:
+    """Classify the product into a SCENE_BUCKETS key for cinematic scene
+    prompt selection. Keyword lists mirror the hashtag-selection logic below.
+    Fallback: 'die-cast' (neutral, works reasonably for most toys)."""
+    p = (product_name or "").lower()
+
+    plushie_kw = ["plush", "plushie", "stuffed", "sanrio", "hello kitty",
+                  "cinnamoroll", "kuromi", "teddy", "bear"]
+    building_kw = ["building", "blocks", "lego", "construction set",
+                   "warship", "tank"]
+    figure_kw = ["anime", "naruto", "one piece", "dragon ball", "luffy",
+                 "tanjiro", "zenitsu", "nezuko", "goku", "demon slayer",
+                 "jujutsu", "gojo", "pokemon", "my hero", "itachi", "sasuke",
+                 "figure", "action figure", "spider man", "spiderman",
+                 "transformers", "bumblebee", "gundam"]
+    diecast_kw = ["car", "suv", "truck", "die-cast", "diecast",
+                  "lightning mcqueen", "land rover", "vehicle",
+                  "monster truck", "excavator", "rc car"]
+
+    if any(k in p for k in plushie_kw):
+        return "plushie"
+    if any(k in p for k in building_kw):
+        return "building-blocks"
+    if any(k in p for k in figure_kw):
+        return "action-figure"
+    if any(k in p for k in diecast_kw):
+        return "die-cast"
+    return "die-cast"
 
 def _fix_copy(copy, compliance_feedback, input_data, attempt=1):
     """Send the failed copy back to AI with compliance issues to auto-fix.
@@ -102,12 +135,150 @@ HASHTAGS:
     return call_claude(prompt)
 
 
+def _run_cinematic_pipeline(input_data, _step):
+    """
+    DISCOVERY-style (no-basket) pipeline: nano-banana + Wan 2.2 Fast visuals,
+    discovery copywriter caption (no #ad, no basket CTA), no voiceover,
+    no compliance gating. Goal: reach / FYP algorithm, not conversion.
+
+    Compliance_status is marked 'DISCOVERY' in Supabase so the frontend and
+    analytics can distinguish these from basketed affiliate posts.
+    """
+    product_image_urls = input_data.get("product_image_urls", [])
+    if not product_image_urls:
+        return {
+            "error": "Cinematic style requires at least one product_image_url.",
+            "style": "cinematic",
+        }
+
+    # Pull past hooks so the discovery caption varies from recent posts
+    past_hooks = []
+    try:
+        recent_ads = supabase.table("ads").select("hook").order(
+            "created_at", desc=True
+        ).limit(10).execute().data
+        past_hooks = [a.get("hook", "") for a in recent_ads if a.get("hook")]
+    except Exception:
+        pass
+
+    # Lightweight strategy pass for hook/angle/audience detection
+    _step("Creating discovery strategy...")
+    try:
+        strategy_raw = run_strategist({**input_data, "past_hooks": past_hooks})
+        cleaned = re.sub(r"```(?:json)?\s*", "", strategy_raw).strip()
+        json_match = re.search(r'\{.*\}', cleaned, re.DOTALL)
+        strategy = json.loads(json_match.group() if json_match else cleaned)
+    except Exception:
+        strategy = {}
+
+    audience = input_data.get("audience", "") or strategy.get("auto_audience", "TikTok users")
+    goal = "FYP reach / discovery (no affiliate link)"
+
+    # STEP — DISCOVERY COPYWRITER
+    _step("Writing discovery caption...")
+    copy = run_discovery_copywriter({
+        "product": input_data["product"],
+        "audience": audience,
+        "hook": strategy.get("hook", ""),
+        "angle": strategy.get("angle", ""),
+        "past_hooks": past_hooks,
+    })
+
+    # Parse CAPTION + HASHTAGS from the copywriter output
+    caption_match = re.search(r'CAPTION:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
+    hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
+    caption_text = caption_match.group(1).strip() if caption_match else copy.strip()
+    hashtags = hashtag_match.group(1).strip() if hashtag_match else "#AIgenerated #ToysPH #BudolFinds"
+
+    # Strip any forbidden affiliate tags that slipped through
+    forbidden = {"#ad", "#sponsored", "#affiliate", "#tiktokshopph"}
+    tag_tokens = [t for t in hashtags.split() if t.lower() not in forbidden]
+    if "#AIgenerated".lower() not in {t.lower() for t in tag_tokens}:
+        tag_tokens.append("#AIgenerated")
+    hashtags = " ".join(tag_tokens)
+
+    tiktok_caption = f"{caption_text}\n\n{hashtags}".strip()
+
+    # STEP — CINEMATIC SCENES (nano-banana)
+    product_type = _detect_product_type(input_data.get("product", ""))
+    print(f"[CINEMATIC] Detected product_type='{product_type}'")
+    _step("Generating cinematic scenes...")
+    try:
+        image_urls = generate_cinematic_scenes(product_image_urls[0],
+                                               num_scenes=4,
+                                               product_type=product_type)
+    except Exception as e:
+        print(f"[CINEMATIC] Scene gen failed: {e}")
+        image_urls = []
+
+    if not image_urls:
+        print("[CINEMATIC] No scenes generated, falling back to raw product photo")
+        image_urls = product_image_urls
+
+    # STEP — ANIMATE (Wan 2.2 Fast)
+    _step("Animating scenes...")
+    try:
+        video_clip_urls = generate_cinematic_clips(image_urls, duration_per_clip=5)
+    except Exception as e:
+        print(f"[CINEMATIC] Animation failed: {e}")
+        video_clip_urls = []
+
+    # STEP — ASSEMBLE (no voiceover; BGM only)
+    _step("Assembling discovery video...")
+    try:
+        video_url = assemble_video(
+            image_urls,
+            None,  # no voiceover
+            "",    # no script text
+            video_clip_urls=video_clip_urls if video_clip_urls else None,
+            product_overlay_url=None,
+            user_video_urls=None,
+            word_timestamps=None,
+            bgm_style=input_data.get("bgm_style", "lofi"),
+        )
+    except Exception as e:
+        print(f"[CINEMATIC] Assembly failed: {e}")
+        video_url = None
+
+    # STEP — SAVE
+    _step("Saving to database...")
+    final_payload = {
+        "product": input_data["product"],
+        "audience": audience,
+        "platform": "TikTok",
+        "goal": goal,
+        "hook": strategy.get("hook", ""),
+        "angle": strategy.get("angle", ""),
+        "positioning": strategy.get("positioning", ""),
+        "copy": copy,
+        "creative": "",
+        "qa_score": None,
+        "qa_score_numeric": None,
+        "media": "",
+        "images": ",".join(image_urls) if image_urls else None,
+        "voiceover_url": None,
+        "compliance_status": "DISCOVERY",
+        "tiktok_caption": tiktok_caption,
+        "video_url": video_url,
+    }
+
+    response = save_ad(final_payload)
+    if response and response.data and len(response.data) > 0:
+        final_payload["id"] = response.data[0].get("id")
+
+    return final_payload
+
+
 def run_pipeline(input_data, on_step=None):
 
     def _step(name):
         print(f"\n[STEP: {name}]")
         if on_step:
             on_step(name)
+
+    # Style branch: "cinematic" = no-basket discovery post. Default = affiliate/basket.
+    if input_data.get("style", "affiliate") == "cinematic":
+        return _run_cinematic_pipeline(input_data, _step)
 
     # STEP 0 — FETCH LATEST TIKTOK RULES (cached 24h)
     _step("Checking latest TikTok policies...")
