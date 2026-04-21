@@ -458,9 +458,18 @@ export default function Home() {
                    onClick={() => setUseAiVideo(!useAiVideo)}>
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
               </div>
-              <span className="text-sm text-gray-400">
-                {useAiVideo ? "AI motion video ON (~$1-2/ad)" : "Free video mode (CapCut-style editing)"}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-300">
+                  {useAiVideo
+                    ? "AI motion video — premium (~$1.67/post)"
+                    : "Free video mode — recommended (~$0.49/post)"}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {useAiVideo
+                    ? "Wan 2.5 animates each scene. Higher cost, slight quality bump."
+                    : "Ken Burns pan on static scenes + voiceover + captions. Looks native on TikTok."}
+                </span>
+              </div>
             </label>
           </>
         )}
