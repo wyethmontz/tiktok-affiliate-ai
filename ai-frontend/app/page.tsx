@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { API_URL } from "../lib/api";
+import { API_URL, authHeaders } from "../lib/api";
 
 export default function Home() {
   const [product, setProduct] = useState("");
@@ -47,11 +47,12 @@ export default function Home() {
     if (toUpload.length === 0) return;
 
     setUploading(true);
+    const headers = await authHeaders();
     for (const file of toUpload) {
       try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await axios.post(`${API_URL}/upload-image`, formData);
+        const res = await axios.post(`${API_URL}/upload-image`, formData, { headers });
         setImageUrls(prev => [...prev, res.data.url]);
         setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
       } catch {
@@ -145,11 +146,12 @@ export default function Home() {
     if (toUpload.length === 0) return;
 
     setUploadingVideo(true);
+    const headers = await authHeaders();
     for (const file of toUpload) {
       try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await axios.post(`${API_URL}/upload-video`, formData);
+        const res = await axios.post(`${API_URL}/upload-video`, formData, { headers });
         setVideoUrls(prev => [...prev, res.data.url]);
         setVideoNames(prev => [...prev, file.name]);
       } catch {
@@ -192,6 +194,7 @@ export default function Home() {
     setShowVideoInputs(false);
 
     try {
+      const headers = await authHeaders();
       const res = await axios.post(`${API_URL}/generate-ad`, {
         product: product,
         product_image_urls: filteredUrls,
@@ -199,10 +202,10 @@ export default function Home() {
         use_ai_video: useAiVideo,
         bgm_style: bgmStyle,
         style: postStyle,
-      });
+      }, { headers });
       await pollJob(res.data.job_id);
     } catch {
-      setError("Failed to connect to backend. Is it running?");
+      setError("Failed to connect to backend. Is it running? You may need to sign in.");
       setLoading(false);
       setCurrentStep("");
     }
@@ -221,7 +224,8 @@ export default function Home() {
     setRegenerating(true);
     setCurrentStep("Regenerating video...");
     try {
-      const res = await axios.post(`${API_URL}/regenerate-video/${result.id}`);
+      const headers = await authHeaders();
+      const res = await axios.post(`${API_URL}/regenerate-video/${result.id}`, null, { headers });
       await pollJob(res.data.job_id);
     } catch {
       setError("Failed to regenerate video.");

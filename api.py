@@ -1,6 +1,6 @@
 import os
 import uuid
-from fastapi import FastAPI, BackgroundTasks, HTTPException, Request, UploadFile, File
+from fastapi import FastAPI, BackgroundTasks, Depends, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +11,7 @@ from slowapi.errors import RateLimitExceeded
 
 from workflows.ad_pipeline import run_pipeline
 from workflows.regenerate_video import run_regenerate_pipeline
+from core.auth import get_current_user
 from core.db import save_ad, supabase
 from core.job_store import jobs
 from core.analytics import get_summary
@@ -36,12 +37,22 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     )
 
 
+# CORS — lock to the frontend origin(s) in the ALLOWED_ORIGINS env var.
+# Set in .env as a comma-separated list, e.g.:
+#   ALLOWED_ORIGINS=http://localhost:3000,https://abc.trycloudflare.com
+# Dev fallback includes localhost/127.0.0.1 on the default Next.js port.
+_allowed = os.getenv("ALLOWED_ORIGINS", "").strip()
+if _allowed:
+    ALLOWED_ORIGINS = [o.strip() for o in _allowed.split(",") if o.strip()]
+else:
+    ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -127,7 +138,8 @@ MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50MB
 
 @app.post("/upload-image")
 @limiter.limit("20/minute")
-async def upload_image(request: Request, file: UploadFile = File(...)):
+async def upload_image(request: Request, file: UploadFile = File(...),
+                       user=Depends(get_current_user)):
     """Upload a product image and return its URL."""
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Only JPEG, PNG, WebP, and GIF images allowed")
@@ -151,7 +163,8 @@ async def upload_image(request: Request, file: UploadFile = File(...)):
 
 @app.post("/upload-video")
 @limiter.limit("10/minute")
-async def upload_video(request: Request, file: UploadFile = File(...)):
+async def upload_video(request: Request, file: UploadFile = File(...),
+                       user=Depends(get_current_user)):
     """Upload a video clip and return its URL."""
     if file.content_type not in ALLOWED_VIDEO_TYPES:
         raise HTTPException(status_code=400, detail="Only MP4, MOV, WebM, and AVI videos allowed")
@@ -175,7 +188,8 @@ async def upload_video(request: Request, file: UploadFile = File(...)):
 
 @app.post("/generate-ad")
 @limiter.limit("5/minute")
-def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTasks):
+def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTasks,
+                user=Depends(get_current_user)):
     input_data = {
         "product": ad.product.strip(),
         "audience": ad.audience.strip(),
@@ -197,7 +211,8 @@ def generate_ad(request: Request, ad: AdRequest, background_tasks: BackgroundTas
 
 @app.post("/regenerate-video/{ad_id}")
 @limiter.limit("5/minute")
-def regenerate_video(request: Request, ad_id: str, background_tasks: BackgroundTasks):
+def regenerate_video(request: Request, ad_id: str, background_tasks: BackgroundTasks,
+                     user=Depends(get_current_user)):
     """Regenerate video for an existing ad — reuses approved script, only redoes visuals."""
     job_id = jobs.create_job({"ad_id": ad_id, "action": "regenerate"})
     background_tasks.add_task(_run_regenerate_job, job_id, ad_id)
