@@ -228,13 +228,20 @@ def _run_cinematic_pipeline(input_data, _step):
         print("[CINEMATIC] No scenes generated, falling back to raw product photo")
         image_urls = product_image_urls
 
-    # STEP — ANIMATE (Wan 2.2 Fast)
-    _step("Animating scenes...")
-    try:
-        video_clip_urls = generate_cinematic_clips(image_urls, duration_per_clip=5)
-    except Exception as e:
-        print(f"[CINEMATIC] Animation failed: {e}")
-        video_clip_urls = []
+    # STEP — ANIMATE (Wan 2.2 Fast) — gated on use_ai_video flag.
+    # Free mode (default): skip animation, let assemble_video Ken-Burns-pan
+    # the still nano-banana scenes. Saves ~$0.20/post with no meaningful
+    # FYP reach cost; Ken Burns on cinematic stills is a proven TikTok style.
+    video_clip_urls = []
+    if input_data.get("use_ai_video", False):
+        _step("Animating scenes...")
+        try:
+            video_clip_urls = generate_cinematic_clips(image_urls, duration_per_clip=5)
+        except Exception as e:
+            print(f"[CINEMATIC] Animation failed: {e}")
+            video_clip_urls = []
+    else:
+        print("[CINEMATIC] Free mode — skipping Wan 2.2, Ken Burns pan on stills")
 
     # STEP — ASSEMBLE (no voiceover; BGM auto-picked by product_type)
     bgm_style = _pick_discovery_bgm(product_type)

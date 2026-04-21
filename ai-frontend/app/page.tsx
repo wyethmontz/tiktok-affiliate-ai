@@ -446,33 +446,40 @@ export default function Home() {
         </div>
         )}
 
-        {/* Background Music + AI video toggle — hidden in cinematic (silent + always Wan 2.2 Fast) */}
+        {/* Background Music line — affiliate only (cinematic auto-picks BGM per product type) */}
         {postStyle === "affiliate" && (
-          <>
-            <div className="flex items-center gap-3 text-sm text-gray-400">
-              Happy ukulele background music (free, no copyright)
-            </div>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className={`relative w-10 h-5 rounded-full transition-colors ${useAiVideo ? 'bg-purple-600' : 'bg-gray-700'}`}
-                   onClick={() => setUseAiVideo(!useAiVideo)}>
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm text-gray-300">
-                  {useAiVideo
-                    ? "AI motion video — premium (~$1.67/post)"
-                    : "Free video mode — recommended (~$0.49/post)"}
-                </span>
-                <span className="text-xs text-gray-500">
-                  {useAiVideo
-                    ? "Wan 2.5 animates each scene. Higher cost, slight quality bump."
-                    : "Ken Burns pan on static scenes + voiceover + captions. Looks native on TikTok."}
-                </span>
-              </div>
-            </label>
-          </>
+          <div className="flex items-center gap-3 text-sm text-gray-400">
+            Happy ukulele background music (free, no copyright)
+          </div>
         )}
+
+        {/* AI video toggle — shown for both modes, cost/context labels differ */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div className={`relative w-10 h-5 rounded-full transition-colors ${useAiVideo ? 'bg-purple-600' : 'bg-gray-700'}`}
+               onClick={() => setUseAiVideo(!useAiVideo)}>
+            <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${useAiVideo ? 'translate-x-5' : 'translate-x-0.5'}`} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm text-gray-300">
+              {postStyle === "cinematic"
+                ? (useAiVideo
+                    ? "AI motion video — premium (~$0.38/post)"
+                    : "Free video mode — recommended (~$0.18/post)")
+                : (useAiVideo
+                    ? "AI motion video — premium (~$1.67/post)"
+                    : "Free video mode — recommended (~$0.49/post)")}
+            </span>
+            <span className="text-xs text-gray-500">
+              {postStyle === "cinematic"
+                ? (useAiVideo
+                    ? "Wan 2.2 Fast animates each scene. Marginal FYP gain, 2× cost."
+                    : "Ken Burns pan on cinematic stills + mood BGM. Netflix/photo-reel aesthetic.")
+                : (useAiVideo
+                    ? "Wan 2.5 animates each scene. Higher cost, slight quality bump."
+                    : "Ken Burns pan on static scenes + voiceover + captions. Looks native on TikTok.")}
+            </span>
+          </div>
+        </label>
 
         <button
           onClick={generateAd}

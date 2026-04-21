@@ -114,12 +114,25 @@ Restore from backup if anything goes sideways — the CSV has the exact pre-chan
 
 ## 7. Cost + throughput expectations
 
-| Item | Cost |
-|---|---|
-| One cinematic Discovery run | ~$0.36 (~3 min) |
-| One affiliate run (existing) | ~$1-2 |
-| Full day (1 affiliate + 2 discovery) | ~$1.72-2.72 |
-| 30-day total estimate | ~$45-60 (Replicate + ElevenLabs) |
+Both pipelines now support a **Free video mode** (Ken Burns pan on static scenes) and a **Premium** mode (AI-animated motion). Free is the default for both.
+
+| Pipeline | Mode | Cost/post | Notes |
+|---|---|---|---|
+| Discovery | Free (default) | ~$0.18 | nano-banana scenes + Ken Burns + mood BGM |
+| Discovery | Premium | ~$0.38 | + Wan 2.2 Fast motion (marginal FYP gain) |
+| Affiliate | Free (default) | ~$0.49 | Kontext scenes + Ken Burns + voiceover + captions |
+| Affiliate | Premium | ~$1.67 | + Wan 2.5 I2V motion |
+
+### Monthly totals (30-day plan, 2:1 Discovery:Affiliate ratio)
+
+| Strategy | Math | **Monthly** |
+|---|---|---|
+| **Both Free (recommended)** | 60 × $0.18 + 30 × $0.49 | **$25.50** |
+| Discovery Free + Affiliate Premium | 60 × $0.18 + 30 × $1.67 | $60.90 |
+| Both Premium | 60 × $0.38 + 30 × $1.67 | $73.00 |
+| All-Affiliate Premium (old pattern) | 90 × $1.67 | $150.30 |
+
+Free mode keeps the whole 30-day campaign under **~$26/month**. That's a 5x savings vs the old all-Premium pattern, and TikTok's FYP algorithm does not penalize still-image Ken Burns content — the aesthetic reads as photo-reel/Netflix-style, which actually outperforms over-animated AI video on retention.
 
 ---
 
