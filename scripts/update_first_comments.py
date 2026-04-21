@@ -1,6 +1,10 @@
 """Sync the TikTok 30-Day Plan Google Sheet:
-1. Auto-generate first comments for rows with captions
+1. Auto-generate style-aware first comments (basket CTA for Affiliate, engagement-only for Discovery)
 2. Auto-update TikTok Name (30 char) from Pipeline Input
+
+Column layout (post Post_Style insert at G):
+A Date | B Day | C Time | D Shopee Search | E Pipeline Input | F Status
+G Post_Style | H Views | I TikTok Caption | J First Comment | K TikTok Name | L Notes
 """
 import gspread
 import re
@@ -12,13 +16,56 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 SHEET_ID = "1tlMlck70AXHkOOXupk0KgHQarwXg6i9uusWIBhPwNjg"
 CREDS_FILE = "google-creds.json"
 
+# 0-indexed array positions
+PIPELINE_INPUT_IDX = 4    # E
+POST_STYLE_IDX = 6        # G
+CAPTION_IDX = 8           # I
+FIRST_COMMENT_IDX = 9     # J
+TIKTOK_NAME_IDX = 10      # K
 
-def trim_name(name, max_len=30):
+# A1 write columns
+FIRST_COMMENT_COL_A1 = "J"
+TIKTOK_NAME_COL_A1 = "K"
+
+EMOJI_TRAIL_RE = re.compile(
+    r'[\U0001f447\U0001f446\U0001f6d2\U0001f923\U0001f602\U0001f60d\U0001f525\U0001f440]+\s*$'
+)
+
+
+def trim_name(name: str, max_len: int = 30) -> str:
     name = name.strip()
     if len(name) <= max_len:
         return name
     trimmed = name[:max_len].rsplit(' ', 1)[0]
     return trimmed if trimmed else name[:max_len]
+
+
+def extract_question(lines: list[str]) -> str:
+    """First non-hashtag line containing '?'."""
+    for line in lines:
+        if line.startswith("#"):
+            continue
+        if "?" in line:
+            return line
+    return ""
+
+
+def build_affiliate_comment(lines: list[str]) -> str:
+    """Engagement question + 'Tap the yellow basket 🛒'."""
+    question = extract_question(lines)
+    if question:
+        clean_q = EMOJI_TRAIL_RE.sub('', question).strip()
+        return f"{clean_q} Tap the yellow basket \U0001f6d2"
+    return "Sulit na sulit ito! Tap the yellow basket \U0001f6d2"
+
+
+def build_discovery_comment(lines: list[str]) -> str | None:
+    """Engagement-only — NO link language. None if no question found."""
+    question = extract_question(lines)
+    if not question:
+        return None
+    clean_q = EMOJI_TRAIL_RE.sub('', question).strip()
+    return f"{clean_q} \U0001f447"
 
 
 gc = gspread.service_account(filename=CREDS_FILE)
@@ -28,61 +75,68 @@ records = ws.get_all_values()
 
 comment_updates = []
 name_updates = []
+skipped_discovery_no_question = 0
 
 for i, row in enumerate(records):
     if i == 0:
-        continue
+        continue  # header
     row_num = i + 1
-    pipeline_input = row[4] if len(row) > 4 else ""
-    caption = row[7] if len(row) > 7 else ""
-    first_comment = row[8] if len(row) > 8 else ""
-    current_tiktok_name = row[9] if len(row) > 9 else ""
 
-    # 1. UPDATE FIRST COMMENT (basket-aware — reinforces product + asks engagement question)
-    # Regenerate if caption exists and comment is empty OR still uses old "Comment X for link" style
-    needs_update = caption.strip() and (
-        not first_comment.strip() or
-        "para sa link" in first_comment.lower() or
-        "for link" in first_comment.lower() or
-        "para ma-send" in first_comment.lower() or
-        ("tap the basket" in first_comment.lower() and "yellow" not in first_comment.lower()) or
-        first_comment.strip().endswith("\U0001f447") or
-        "yellow basket" not in first_comment.lower()  # ensure all comments mention yellow basket
+    pipeline_input = row[PIPELINE_INPUT_IDX] if len(row) > PIPELINE_INPUT_IDX else ""
+    caption = row[CAPTION_IDX] if len(row) > CAPTION_IDX else ""
+    first_comment = row[FIRST_COMMENT_IDX] if len(row) > FIRST_COMMENT_IDX else ""
+    current_tiktok_name = row[TIKTOK_NAME_IDX] if len(row) > TIKTOK_NAME_IDX else ""
+    post_style = (row[POST_STYLE_IDX] if len(row) > POST_STYLE_IDX else "").strip().lower()
+
+    # 1. FIRST COMMENT — regenerate if caption exists AND comment is empty OR uses legacy basket language
+    has_caption = bool(caption.strip())
+    legacy_cta = any(s in first_comment.lower() for s in [
+        "para sa link", "for link", "para ma-send"
+    ])
+    legacy_basket = "tap the basket" in first_comment.lower() and "yellow" not in first_comment.lower()
+    needs_update = has_caption and (
+        not first_comment.strip() or legacy_cta or legacy_basket
     )
+
     if needs_update:
         lines = [l.strip() for l in caption.split("\n") if l.strip()]
-        question = ""
-        for line in lines:
-            if "?" in line and not line.startswith("#"):
-                question = line
-                break
 
-        if question:
-            # Clean trailing direction-arrow emojis (direction varies by device)
-            clean_q = re.sub(r'[\U0001f447\U0001f446]+\s*$', '', question).strip()
-            # Ask the engagement question + point to yellow basket above caption
-            first_comment_text = f"{clean_q} Tap the yellow basket \U0001f6d2"
+        if post_style == "discovery":
+            comment_text = build_discovery_comment(lines)
+            if comment_text is None:
+                skipped_discovery_no_question += 1
+                print(f"[Skip] Row {row_num} [D]: no engagement question — leaving blank")
+                comment_text = None
         else:
-            # Fallback: generic basket pointer
-            first_comment_text = "Sulit na sulit ito! Tap the yellow basket \U0001f6d2"
+            # Affiliate or missing/unknown style -> basket-CTA
+            comment_text = build_affiliate_comment(lines)
 
-        comment_updates.append({'range': f'I{row_num}', 'values': [[first_comment_text]]})
-        print(f"[Comment] Row {row_num}: {first_comment_text[:70]}...")
+        if comment_text:
+            tag = "[D]" if post_style == "discovery" else "[A]"
+            comment_updates.append({
+                'range': f'{FIRST_COMMENT_COL_A1}{row_num}',
+                'values': [[comment_text]],
+            })
+            print(f"[Comment] Row {row_num} {tag}: {comment_text[:80]}")
 
-    # 2. UPDATE TIKTOK NAME (if pipeline input exists and name is wrong/empty)
+    # 2. TIKTOK NAME — update when pipeline_input is real + differs from current
     if pipeline_input.strip() and not pipeline_input.startswith('['):
         new_name = trim_name(pipeline_input)
         if new_name != current_tiktok_name:
-            name_updates.append({'range': f'J{row_num}', 'values': [[new_name]]})
+            name_updates.append({
+                'range': f'{TIKTOK_NAME_COL_A1}{row_num}',
+                'values': [[new_name]],
+            })
             print(f"[Name] Row {row_num}: '{pipeline_input[:40]}' -> '{new_name}'")
 
-# Apply updates in batches
+# Batch writes
 all_updates = comment_updates + name_updates
 if all_updates:
     for i in range(0, len(all_updates), 30):
-        chunk = all_updates[i:i+30]
-        ws.batch_update(chunk)
+        ws.batch_update(all_updates[i:i + 30])
 
 print(f"\n{len(comment_updates)} first comments updated")
 print(f"{len(name_updates)} TikTok names updated")
+if skipped_discovery_no_question:
+    print(f"{skipped_discovery_no_question} Discovery rows skipped (no engagement question in caption)")
 print(f"\nSheet: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
