@@ -5,9 +5,23 @@ import subprocess
 MUSIC_DIR = os.path.join(os.path.dirname(__file__), "..", "assets", "music")
 
 BGM_TRACKS = {
+    # Affiliate default — cheerful, ad-friendly
     "happy": {
         "file": "happy-ukulele.mp3",
-        "description": "Happy ukulele — playful, cheerful, perfect for toys",
+        "description": "Happy ukulele — playful, cheerful, perfect for toy affiliate ads",
+    },
+    # Discovery moods — matched to SCENE_BUCKETS for algorithmic coherence
+    "cinematic": {
+        "file": "cinematic-ambient.mp3",
+        "description": "Cinematic ambient — die-cast cars, action figures, premium collector vibe",
+    },
+    "soft": {
+        "file": "soft-lofi.mp3",
+        "description": "Soft lo-fi piano — plushies, cozy/cute aesthetic",
+    },
+    "lofi": {
+        "file": "lofi-beats.mp3",
+        "description": "Chill lo-fi beats — building blocks, focused/creative vibe",
     },
 }
 

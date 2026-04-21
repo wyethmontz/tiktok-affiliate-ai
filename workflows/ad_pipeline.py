@@ -51,6 +51,19 @@ def _detect_product_type(product_name: str) -> str:
         return "die-cast"
     return "die-cast"
 
+
+def _pick_discovery_bgm(product_type: str) -> str:
+    """Map SCENE_BUCKETS product_type -> BGM_TRACKS mood for audio/visual
+    coherence. Discovery videos need the music genre to match the visual
+    aesthetic or TikTok's FYP algorithm reads it as incoherent ad content."""
+    mapping = {
+        "die-cast": "cinematic",
+        "action-figure": "cinematic",
+        "plushie": "soft",
+        "building-blocks": "lofi",
+    }
+    return mapping.get(product_type, "cinematic")
+
 def _fix_copy(copy, compliance_feedback, input_data, attempt=1):
     """Send the failed copy back to AI with compliance issues to auto-fix.
     Escalates approach on each attempt — gentle fix first, full rewrite last."""
@@ -223,7 +236,9 @@ def _run_cinematic_pipeline(input_data, _step):
         print(f"[CINEMATIC] Animation failed: {e}")
         video_clip_urls = []
 
-    # STEP — ASSEMBLE (no voiceover; BGM only)
+    # STEP — ASSEMBLE (no voiceover; BGM auto-picked by product_type)
+    bgm_style = _pick_discovery_bgm(product_type)
+    print(f"[CINEMATIC] BGM auto-pick: product_type='{product_type}' -> bgm='{bgm_style}'")
     _step("Assembling discovery video...")
     try:
         video_url = assemble_video(
@@ -234,7 +249,7 @@ def _run_cinematic_pipeline(input_data, _step):
             product_overlay_url=None,
             user_video_urls=None,
             word_timestamps=None,
-            bgm_style=input_data.get("bgm_style", "lofi"),
+            bgm_style=bgm_style,
         )
     except Exception as e:
         print(f"[CINEMATIC] Assembly failed: {e}")

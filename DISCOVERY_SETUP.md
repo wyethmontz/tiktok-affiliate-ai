@@ -20,9 +20,28 @@ TikTok throttles videos with baskets attached (routes them to a smaller commerce
 
 - [ ] `git pull` on personal laptop
 - [ ] `cd tiktok-affiliate-ai && source venv/Scripts/activate`
-- [ ] `pip install -r requirements.txt` — no new deps added (`random` is stdlib), safe to re-run
+- [ ] `pip install -r requirements.txt` — adds `gspread`; other deps unchanged
 - [ ] `cd ai-frontend && npm install` — no new deps, safe to re-run
 - [ ] Confirm `.env` still has `REPLICATE_API_TOKEN` (needed for nano-banana + Wan 2.2 Fast)
+
+### Download Discovery BGM tracks (mood buckets)
+
+The Discovery pipeline auto-picks BGM by product type for audio/visual coherence. The existing `happy-ukulele.mp3` stays for Affiliate posts; 3 new tracks need to be dropped into `assets/music/`. All free on [Pixabay Music](https://pixabay.com/music/) (CC0, no attribution, commercial OK). 30s+ each, under 5MB.
+
+- [ ] Search "cinematic ambient" → save as `assets/music/cinematic-ambient.mp3` (die-cast + action figures)
+- [ ] Search "lofi piano soft" → save as `assets/music/soft-lofi.mp3` (plushies)
+- [ ] Search "lofi beats chill" → save as `assets/music/lofi-beats.mp3` (building blocks)
+- [ ] Verify filenames match exactly — the pipeline looks these up by exact name in [core/bgm.py](core/bgm.py)
+
+Mapping (auto, no UI):
+
+| Product type | BGM mood key | File |
+|---|---|---|
+| die-cast | cinematic | cinematic-ambient.mp3 |
+| action-figure | cinematic | cinematic-ambient.mp3 |
+| plushie | soft | soft-lofi.mp3 |
+| building-blocks | lofi | lofi-beats.mp3 |
+| (unknown) | cinematic | cinematic-ambient.mp3 |
 
 ## 3. Smoke-test the cinematic pipeline (~$1.44 total)
 
