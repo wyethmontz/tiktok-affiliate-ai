@@ -52,10 +52,13 @@ TIME_TO_STYLE = {
 }
 
 POST_STYLE_HEADER = "Post_Style"
-POST_STYLE_COL = 12  # Column L
+POST_STYLE_COL = 7    # Column G (moved adjacent to Status for readability)
 
-CAPTION_COL = 8       # Column H
-FIRST_COMMENT_COL = 9  # Column I
+# Column layout after the Post_Style insert at G:
+# A Date | B Day | C Time | D Shopee Search | E Pipeline Input | F Status
+# G Post_Style | H Views | I TikTok Caption | J First Comment | K TikTok Name | L Notes
+CAPTION_COL = 9       # Column I (was H before Post_Style insert)
+FIRST_COMMENT_COL = 10 # Column J (was I before Post_Style insert)
 STATUS_COL = 6        # Column F
 TIME_COL = 3          # Column C
 

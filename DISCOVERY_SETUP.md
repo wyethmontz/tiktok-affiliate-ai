@@ -69,7 +69,7 @@ Parameters locked:
 - **Ratio:** 1 Affiliate + 2 Discovery per day (1:2)
 - **Time-slot assignment:** 12 PM + 6 PM = Discovery, 9 PM = Affiliate
 - **Blank captions:** Yes — Discovery rows get H (Caption) + I (First Comment) blanked so pipeline regenerates them
-- **Column L:** new `Post_Style` column with values `Affiliate` or `Discovery`
+- **Column G:** new `Post_Style` column (between Status and Views) with values `Affiliate` or `Discovery`
 
 Run the script from the project root on your personal laptop. **Docker is the recommended path** — matches the rest of your stack.
 
@@ -101,8 +101,8 @@ python scripts/update_30day_plan.py --apply      # apply
 
 What it does:
 - Skips any row with Status = "Posted" (untouched)
-- Writes "Post_Style" header to L1
-- Tags each remaining row's column L based on time slot
+- Writes "Post_Style" header to G1
+- Tags each remaining row's column G based on time slot
 - Blanks H + I on Discovery rows so they regenerate via `discovery_copywriter`
 - Saves a timestamped CSV backup to `scripts/backups/` before every run (dry-run and apply)
 
