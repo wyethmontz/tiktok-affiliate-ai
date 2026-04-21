@@ -59,15 +59,6 @@ def build_affiliate_comment(lines: list[str]) -> str:
     return "Sulit na sulit ito! Tap the yellow basket \U0001f6d2"
 
 
-def build_discovery_comment(lines: list[str]) -> str | None:
-    """Engagement-only — NO link language. None if no question found."""
-    question = extract_question(lines)
-    if not question:
-        return None
-    clean_q = EMOJI_TRAIL_RE.sub('', question).strip()
-    return f"{clean_q} \U0001f447"
-
-
 gc = gspread.service_account(filename=CREDS_FILE)
 sh = gc.open_by_key(SHEET_ID)
 ws = sh.sheet1
@@ -75,7 +66,7 @@ records = ws.get_all_values()
 
 comment_updates = []
 name_updates = []
-skipped_discovery_no_question = 0
+skipped_discovery = 0
 
 for i, row in enumerate(records):
     if i == 0:
@@ -87,6 +78,13 @@ for i, row in enumerate(records):
     first_comment = row[FIRST_COMMENT_IDX] if len(row) > FIRST_COMMENT_IDX else ""
     current_tiktok_name = row[TIKTOK_NAME_IDX] if len(row) > TIKTOK_NAME_IDX else ""
     post_style = (row[POST_STYLE_IDX] if len(row) > POST_STYLE_IDX else "").strip().lower()
+
+    # Discovery posts get neither first comment nor TikTok Name — the "photo-reel
+    # aesthetic" strategy requires a clean pinned-slot and no product-title
+    # overlay that reads as commerce. Only Affiliate rows need these fields.
+    if post_style == "discovery":
+        skipped_discovery += 1
+        continue
 
     # 1. FIRST COMMENT — regenerate if caption exists AND comment is empty OR uses legacy basket language
     has_caption = bool(caption.strip())
@@ -100,24 +98,12 @@ for i, row in enumerate(records):
 
     if needs_update:
         lines = [l.strip() for l in caption.split("\n") if l.strip()]
-
-        if post_style == "discovery":
-            comment_text = build_discovery_comment(lines)
-            if comment_text is None:
-                skipped_discovery_no_question += 1
-                print(f"[Skip] Row {row_num} [D]: no engagement question — leaving blank")
-                comment_text = None
-        else:
-            # Affiliate or missing/unknown style -> basket-CTA
-            comment_text = build_affiliate_comment(lines)
-
-        if comment_text:
-            tag = "[D]" if post_style == "discovery" else "[A]"
-            comment_updates.append({
-                'range': f'{FIRST_COMMENT_COL_A1}{row_num}',
-                'values': [[comment_text]],
-            })
-            print(f"[Comment] Row {row_num} {tag}: {comment_text[:80]}")
+        comment_text = build_affiliate_comment(lines)
+        comment_updates.append({
+            'range': f'{FIRST_COMMENT_COL_A1}{row_num}',
+            'values': [[comment_text]],
+        })
+        print(f"[Comment] Row {row_num} [A]: {comment_text[:80]}")
 
     # 2. TIKTOK NAME — update when pipeline_input is real + differs from current
     if pipeline_input.strip() and not pipeline_input.startswith('['):
@@ -135,8 +121,8 @@ if all_updates:
     for i in range(0, len(all_updates), 30):
         ws.batch_update(all_updates[i:i + 30])
 
-print(f"\n{len(comment_updates)} first comments updated")
-print(f"{len(name_updates)} TikTok names updated")
-if skipped_discovery_no_question:
-    print(f"{skipped_discovery_no_question} Discovery rows skipped (no engagement question in caption)")
+print(f"\n{len(comment_updates)} first comments updated (Affiliate rows)")
+print(f"{len(name_updates)} TikTok names updated (Affiliate rows)")
+if skipped_discovery:
+    print(f"{skipped_discovery} Discovery rows skipped — first comment + TikTok Name stay empty by design")
 print(f"\nSheet: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
