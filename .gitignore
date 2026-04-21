@@ -222,3 +222,6 @@ google-creds.json
 
 # Claude Code
 .claude/
+
+# Local sheet backups (timestamped CSVs from update_30day_plan.py)
+scripts/backups/
