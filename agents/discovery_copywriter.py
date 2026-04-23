@@ -33,15 +33,27 @@ HOOK IDEA: {hook}
 ANGLE: {angle}
 LANGUAGE: {language}
 
+CAPTION STRUCTURE (CRITICAL — this drives comment rate):
+
+Line 1 MUST be the engagement question. Under 80 characters.
+Reason: TikTok shows only ~80 characters of your caption in the FYP preview
+before truncating with "... more". The question MUST be in that preview
+so viewers see the hook and comment. If you bury the question at the end,
+nobody reads it, nobody comments, and the FYP algorithm demotes the post.
+
+Line 2-3 (optional): short reaction or context, max 1-2 short sentences.
+
+Use blank lines between sections for readability on TikTok.
+
 CAPTION RULES (STRICT):
 - NEVER include "#ad", "#sponsored", "#affiliate", "basket", "link", "tap", "shop", "buy"
 - NEVER mention prices, discounts, or sales
 - NEVER invent claims, stats, or testimonials
 - Do NOT use apostrophe contractions ('to, 'yan, 'yung, 'di) — write full words: ito, iyan, iyong, hindi
 - Keep it natural, conversational Tagalog (parang kwento sa kaibigan)
-- Open with a question, reaction, or observation — something that drives comments
-- 1-3 sentences MAX. Short beats long on TikTok.
-- End with an engagement question that isn't salesy
+- Engagement question MUST be Line 1 (under 80 chars for TikTok preview cutoff)
+- Total caption: 1-3 short sentences. Short beats long on TikTok.
+- Question must be concrete and pick-one style: "X or Y, sino mas cute?" performs better than open-ended "Ano tingin niyo?"
 
 HASHTAG RULES:
 - 4-6 hashtags total
@@ -53,10 +65,22 @@ HASHTAG RULES:
 Return EXACTLY in this format:
 
 CAPTION:
-[1-3 sentence discovery caption in {language} ending with an engagement question]
+[LINE 1: engagement question in {language}, under 80 chars, ends with ? and emoji like 👇 🫶 or 😂]
+
+[LINE 2-3 (optional): short reaction or context]
 
 HASHTAGS:
 [4-6 space-separated hashtags including #AIgenerated, NO #ad, NO #sponsored]
+
+EXAMPLE (for a plushie):
+
+CAPTION:
+Plushie or sariling unan, alin mas comfy? 🫶
+
+Grabe kasi sobrang lambot, parang baby na lang ako dito.
+
+HASHTAGS:
+#AIgenerated #PlushiePH #SanrioPH #BudolFinds #KawaiiPH
 """
 
     return call_claude(prompt)
