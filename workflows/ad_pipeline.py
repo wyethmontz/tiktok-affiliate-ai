@@ -24,22 +24,22 @@ MAX_COMPLIANCE_RETRIES = 4
 
 def _detect_product_type(product_name: str) -> str:
     """Classify the product into a SCENE_BUCKETS key for cinematic scene
-    prompt selection. Keyword lists mirror the hashtag-selection logic below.
-    Fallback: 'die-cast' (neutral, works reasonably for most toys)."""
+    prompt selection. Fallback: 'generic' for unmatched products (safer than
+    die-cast which produces car-showroom visuals on unrelated items)."""
     p = (product_name or "").lower()
 
     plushie_kw = ["plush", "plushie", "stuffed", "sanrio", "hello kitty",
-                  "cinnamoroll", "kuromi", "teddy", "bear"]
+                  "cinnamoroll", "kuromi", "teddy", "bear", "rattle"]
     building_kw = ["building", "blocks", "lego", "construction set",
                    "warship", "tank"]
     figure_kw = ["anime", "naruto", "one piece", "dragon ball", "luffy",
                  "tanjiro", "zenitsu", "nezuko", "goku", "demon slayer",
                  "jujutsu", "gojo", "pokemon", "my hero", "itachi", "sasuke",
                  "figure", "action figure", "spider man", "spiderman",
-                 "transformers", "bumblebee", "gundam"]
+                 "transformers", "bumblebee", "gundam", "beyblade"]
     diecast_kw = ["car", "suv", "truck", "die-cast", "diecast",
                   "lightning mcqueen", "land rover", "vehicle",
-                  "monster truck", "excavator", "rc car"]
+                  "monster truck", "excavator", "rc car", "drone"]
 
     if any(k in p for k in plushie_kw):
         return "plushie"
@@ -49,7 +49,7 @@ def _detect_product_type(product_name: str) -> str:
         return "action-figure"
     if any(k in p for k in diecast_kw):
         return "die-cast"
-    return "die-cast"
+    return "generic"
 
 
 def _pick_discovery_bgm(product_type: str) -> str:
@@ -61,8 +61,9 @@ def _pick_discovery_bgm(product_type: str) -> str:
         "action-figure": "cinematic",
         "plushie": "soft",
         "building-blocks": "lofi",
+        "generic": "lofi",  # neutral chill lo-fi works well with any product aesthetic
     }
-    return mapping.get(product_type, "cinematic")
+    return mapping.get(product_type, "lofi")
 
 def _fix_copy(copy, compliance_feedback, input_data, attempt=1):
     """Send the failed copy back to AI with compliance issues to auto-fix.

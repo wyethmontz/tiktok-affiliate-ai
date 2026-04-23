@@ -53,6 +53,16 @@ SCENE_BUCKETS = {
         "macro shot of the minifigures positioned in a scene",
         "on a playmat with other structures in the background",
     ],
+    # Fallback for products that don't fit the 4 main buckets
+    # (beyblades, drones, foam blasters, baby toys, kitchen sets, etc.)
+    "generic": [
+        "on a clean white marble surface with soft natural lighting",
+        "centered in a minimalist display with pastel backdrop",
+        "on a wooden desk next to scattered craft supplies",
+        "on a soft fabric backdrop with warm afternoon light",
+        "displayed on a modern geometric shelf with plants nearby",
+        "on a clean studio background with gentle rim lighting",
+    ],
 }
 
 # Framing rules appended to every scene descriptor so nano-banana produces
@@ -63,10 +73,11 @@ FRAME_SUFFIX = (
 )
 
 
-def get_varied_scenes(product_type: str = "die-cast", count: int = 4) -> list[str]:
+def get_varied_scenes(product_type: str = "generic", count: int = 4) -> list[str]:
     """Draw `count` unique scene prompts from the product_type bucket.
-    Falls back to 'die-cast' for unknown product types."""
-    pool = SCENE_BUCKETS.get(product_type, SCENE_BUCKETS["die-cast"])
+    Falls back to 'generic' for unknown product types (safer than die-cast
+    which renders car-showroom visuals on baby toys / kitchen sets / etc)."""
+    pool = SCENE_BUCKETS.get(product_type, SCENE_BUCKETS["generic"])
     contexts = random.sample(pool, min(count, len(pool)))
     return [f"this product {ctx}, {FRAME_SUFFIX}" for ctx in contexts]
 
