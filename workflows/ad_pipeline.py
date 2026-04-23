@@ -257,6 +257,7 @@ def _run_cinematic_pipeline(input_data, _step):
             user_video_urls=None,
             word_timestamps=None,
             bgm_style=bgm_style,
+            cta_overlay_text="Follow for more toy finds",
         )
     except Exception as e:
         print(f"[CINEMATIC] Assembly failed: {e}")

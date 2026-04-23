@@ -81,6 +81,33 @@ def _get_video_duration(video_path: str) -> float | None:
     return None
 
 
+def _build_cta_overlay_filter(text: str, start: float = 0.5,
+                              duration: float = 2.5) -> str:
+    """
+    Build a small "Follow for more" style overlay near the top of the video,
+    visible only for the first few seconds. Used for Discovery posts where
+    the visual is silent and the account needs explicit follower CTAs.
+
+    Font note: Docker image ships only dejavu-core which has NO emoji glyphs.
+    Keep the text ASCII/basic-latin only. Emojis will render as tofu boxes.
+    """
+    if not text:
+        return ""
+
+    safe_text = text.replace("'", "'\\''").replace(":", "\\:").replace("%", "%%")
+    end = start + duration
+
+    return (
+        f"drawtext=text='{safe_text}'"
+        f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+        f":fontsize=44:fontcolor=white"
+        f":borderw=3:bordercolor=black"
+        f":box=1:boxcolor=black@0.55:boxborderw=10"
+        f":x=(w-text_w)/2:y=h*0.08"
+        f":enable='between(t,{start:.2f},{end:.2f})'"
+    )
+
+
 def _build_caption_filter(text: str, total_duration: float,
                           word_timestamps: list[dict] | None = None) -> str:
     """
@@ -165,7 +192,8 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     product_overlay_url: str | None = None,
                     user_video_urls: list[str] | None = None,
                     word_timestamps: list[dict] | None = None,
-                    bgm_style: str = "lofi") -> str | None:
+                    bgm_style: str = "lofi",
+                    cta_overlay_text: str | None = None) -> str | None:
     """
     Assemble a TikTok-ready MP4 from user video clips, AI video clips, or images + voiceover + captions.
     Priority: user_video_urls > video_clip_urls > image_urls (Ken Burns fallback).
@@ -424,6 +452,29 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     print(f"[VIDEO] Captions burned onto video")
                 else:
                     print(f"[VIDEO] Caption burn failed, using video without captions: {result.stderr[-300:]}")
+
+        # Burn CTA overlay near the top for the first few seconds (Discovery posts).
+        # Drives follower growth during the bucket-reset phase. Independent of
+        # the caption burn so it runs even on silent Discovery videos.
+        if cta_overlay_text:
+            cta_filter = _build_cta_overlay_filter(cta_overlay_text)
+            if cta_filter:
+                cta_path = os.path.join(tmpdir, "with_cta.mp4")
+                cta_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", final_path,
+                    "-vf", cta_filter,
+                    "-c:v", "libx264",
+                    "-pix_fmt", "yuv420p",
+                    "-c:a", "copy",
+                    cta_path
+                ]
+                result = subprocess.run(cta_cmd, capture_output=True, text=True, timeout=120)
+                if result.returncode == 0:
+                    final_path = cta_path
+                    print(f"[VIDEO] CTA overlay burned: {cta_overlay_text!r}")
+                else:
+                    print(f"[VIDEO] CTA overlay failed, continuing without: {result.stderr[-300:]}")
 
         # Overlay product image in the last 3 seconds (CTA moment)
         if product_overlay_url:
