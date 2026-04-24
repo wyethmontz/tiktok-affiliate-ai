@@ -49,8 +49,8 @@ SCENE_BUCKETS = {
         "on a bright workbench with scattered loose bricks around",
         "displayed as a centerpiece on a modern living room shelf",
         "partially built with a focus on the structural complexity",
-        "under bright studio lighting for a 'Lego Store' aesthetic",
-        "macro shot of the minifigures positioned in a scene",
+        "under bright studio lighting on a plain neutral-gray platform",
+        "macro shot of the small figures positioned in a scene",
         "on a playmat with other structures in the background",
     ],
     # Fallback for products that don't fit the 4 main buckets
@@ -67,9 +67,15 @@ SCENE_BUCKETS = {
 
 # Framing rules appended to every scene descriptor so nano-banana produces
 # TikTok-ready output regardless of which bucket was picked.
+# Strict anti-branding suffix: nano-banana will otherwise hallucinate store
+# signage, brand logos, and promotional text when prompts contain store
+# references or adjectives like "retail" / "store" — causing trademark risk.
 FRAME_SUFFIX = (
     "9:16 vertical TikTok format, only one product visible, no duplicates, "
-    "phone-shot authentic feel, sharp focus on the product"
+    "phone-shot authentic feel, sharp focus on the product, "
+    "NO text in image, NO logos, NO brand names, NO store signage, "
+    "NO promotional banners, NO price tags, NO watermarks, "
+    "background is plain and clean without any readable text"
 )
 
 

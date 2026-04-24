@@ -10,27 +10,35 @@ load_dotenv()
 REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 KONTEXT_API_URL = "https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-pro/predictions"
 
+# Anti-branding guard: Kontext (like nano-banana) can hallucinate store signage,
+# logos, and "NEW ARRIVAL" banners when exposed to retail-adjacent language.
+# Append to every prompt to prevent trademark risk + commerce-signal leakage.
+_NO_TEXT_GUARD = (
+    "NO text in image, NO logos, NO brand names, NO store signage, "
+    "NO promotional banners, NO price tags, NO watermarks"
+)
+
 # Scene prompts: each generates a realistic "in-use" image from the product photo
 TOY_SCENE_PROMPTS = [
     (
         "Place this single product on a clean table, one hand reaching to pick it up, "
         "overhead angle, bright natural lighting, only one copy of the product visible, "
-        "TikTok vertical 9:16 format, authentic phone-shot feel"
+        f"TikTok vertical 9:16 format, authentic phone-shot feel, {_NO_TEXT_GUARD}"
     ),
     (
         "One pair of hands holding up this single product to the camera, showing it off, "
         "shallow depth of field, warm soft lighting, simple clean background, "
-        "only one product in frame, vertical 9:16 TikTok style"
+        f"only one product in frame, vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
     ),
     (
         "Close-up of this single product sitting on a white surface, one hand touching it, "
         "product photography style, soft even lighting, no duplicates, "
-        "vertical 9:16 TikTok content, sharp focus on the product"
+        f"vertical 9:16 TikTok content, sharp focus on the product, {_NO_TEXT_GUARD}"
     ),
     (
         "This single product centered in frame on a soft pastel background, "
         "one hand gently presenting it from the side, aesthetic flat lay, "
-        "only one product visible, vertical 9:16 TikTok showcase style"
+        f"only one product visible, vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
     ),
 ]
 
@@ -38,19 +46,19 @@ TOY_SCENE_PROMPTS = [
 GENERIC_SCENE_PROMPTS = [
     (
         "Close-up of hands unboxing this product from packaging, "
-        "overhead shot, natural lighting, TikTok vertical 9:16 format"
+        f"overhead shot, natural lighting, TikTok vertical 9:16 format, {_NO_TEXT_GUARD}"
     ),
     (
         "A person's hands holding this product up to camera, showing it off proudly, "
-        "shallow depth of field, clean background, vertical 9:16 TikTok style"
+        f"shallow depth of field, clean background, vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
     ),
     (
         "This product being used in a real-life setting, hands interacting with it, "
-        "close-up shot, warm natural lighting, vertical 9:16 social media content"
+        f"close-up shot, warm natural lighting, vertical 9:16 social media content, {_NO_TEXT_GUARD}"
     ),
     (
         "Aesthetic product shot of this item with a hand reaching into frame, "
-        "soft lighting, clean background, vertical 9:16 TikTok showcase style"
+        f"soft lighting, clean background, vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
     ),
 ]
 
