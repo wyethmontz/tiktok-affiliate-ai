@@ -146,7 +146,7 @@ def _build_caption_filter(text: str, total_duration: float,
             f":fontsize=58:fontcolor=white"
             f":borderw=4:bordercolor=black"
             f":box=1:boxcolor=black@0.5:boxborderw=12"
-            f":x=(w-text_w)/2:y=h*0.75"
+            f":x=(w-text_w)/2:y=h*0.62"
             f":enable='between(t,{start_time:.2f},{end_time:.2f})'"
         )
 
@@ -180,7 +180,7 @@ def _build_synced_caption_filter(word_timestamps: list[dict]) -> str:
             f":fontsize=58:fontcolor=white"
             f":borderw=4:bordercolor=black"
             f":box=1:boxcolor=black@0.5:boxborderw=12"
-            f":x=(w-text_w)/2:y=h*0.75"
+            f":x=(w-text_w)/2:y=h*0.62"
             f":enable='between(t,{start_time:.3f},{end_time:.3f})'"
         )
 
@@ -476,20 +476,27 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 else:
                     print(f"[VIDEO] CTA overlay failed, continuing without: {result.stderr[-300:]}")
 
-        # Overlay product image in the last 3 seconds (CTA moment)
+        # Overlay product image — TWO appearances: anchor (start, 0-1.5s) +
+        # CTA reinforcement (last 3s). Start anchor builds trust before
+        # AI scenes, end overlay reinforces basket-tap moment. Affiliate-only
+        # (product_overlay_url is None for Discovery posts).
         if product_overlay_url:
             video_duration = _get_video_duration(final_path) or 0
             if video_duration > 3:
-                overlay_start = video_duration - 3
+                anchor_end = 1.5
+                cta_start = video_duration - 3
                 product_img_path = os.path.join(tmpdir, "product_overlay.png")
                 try:
                     _download_file(product_overlay_url, product_img_path)
                     overlay_path = os.path.join(tmpdir, "with_overlay.mp4")
-                    # Product image: scaled to 280px wide, positioned top-right with padding
+                    # Product image: scaled to 280px wide, top-right with padding.
+                    # ffmpeg enable expression: '+' = OR — so the overlay is visible
+                    # during BOTH ranges (start anchor + end CTA).
                     overlay_filter = (
                         f"[1:v]scale=280:-1[prod];"
                         f"[0:v][prod]overlay=W-w-30:30"
-                        f":enable='between(t,{overlay_start:.2f},{video_duration:.2f})'"
+                        f":enable='between(t,0,{anchor_end:.2f})"
+                        f"+between(t,{cta_start:.2f},{video_duration:.2f})'"
                     )
                     overlay_cmd = [
                         "ffmpeg", "-y",
@@ -504,7 +511,7 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                     result = subprocess.run(overlay_cmd, capture_output=True, text=True, timeout=120)
                     if result.returncode == 0:
                         final_path = overlay_path
-                        print(f"[VIDEO] Product overlay added at {overlay_start:.1f}s")
+                        print(f"[VIDEO] Product overlay added: anchor 0-{anchor_end}s + CTA {cta_start:.1f}-{video_duration:.1f}s")
                     else:
                         print(f"[VIDEO] Product overlay failed: {result.stderr[-300:]}")
                 except Exception as e:
