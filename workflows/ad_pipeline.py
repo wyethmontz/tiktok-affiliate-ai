@@ -65,6 +65,21 @@ def _pick_discovery_bgm(product_type: str) -> str:
     }
     return mapping.get(product_type, "lofi")
 
+
+def _pick_affiliate_bgm(product_type: str) -> str:
+    """Pick Affiliate BGM by product type. Mood biases toward energy + showcase
+    rather than aesthetic. Reuses the same 4 tracks as Discovery — no new
+    files needed. Avoids the 'cheerful ukulele on epic anime figure' mismatch
+    that the previous always-happy default produced."""
+    mapping = {
+        "die-cast": "cinematic",       # showcase vibe for cars
+        "action-figure": "cinematic",  # epic vibe for figures (was happy ukulele — wrong)
+        "plushie": "happy",            # ukulele genuinely fits cute plushies
+        "building-blocks": "lofi",     # focus/build vibe
+        "generic": "happy",            # default upbeat
+    }
+    return mapping.get(product_type, "happy")
+
 def _fix_copy(copy, compliance_feedback, input_data, attempt=1):
     """Send the failed copy back to AI with compliance issues to auto-fix.
     Escalates approach on each attempt — gentle fix first, full rewrite last."""
@@ -502,6 +517,15 @@ def run_pipeline(input_data, on_step=None):
         print(f"[PIPELINE] Using free FFmpeg video mode (AI video gen disabled)")
 
     # STEP 10 — VIDEO ASSEMBLY
+    # BGM auto-picked by product type (e.g. action figures get cinematic-ambient
+    # instead of happy ukulele). User can still override via input_data["bgm_style"]
+    # if they explicitly set it; otherwise we mood-match.
+    affiliate_product_type = _detect_product_type(input_data.get("product", ""))
+    auto_bgm = _pick_affiliate_bgm(affiliate_product_type)
+    user_override_bgm = input_data.get("bgm_style")
+    final_bgm = user_override_bgm if (user_override_bgm and user_override_bgm != "happy") else auto_bgm
+    print(f"[PIPELINE] Affiliate BGM: product_type='{affiliate_product_type}' -> '{final_bgm}'")
+
     _step("Assembling TikTok video...")
     product_overlay = product_image_urls[0] if product_image_urls else None
     try:
@@ -510,7 +534,7 @@ def run_pipeline(input_data, on_step=None):
                                    product_overlay_url=product_overlay,
                                    user_video_urls=user_video_urls if has_user_videos else None,
                                    word_timestamps=word_timestamps,
-                                   bgm_style=input_data.get("bgm_style", "lofi"))
+                                   bgm_style=final_bgm)
     except Exception:
         video_url = None
 

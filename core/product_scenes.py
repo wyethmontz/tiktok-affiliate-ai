@@ -18,27 +18,39 @@ _NO_TEXT_GUARD = (
     "NO promotional banners, NO price tags, NO watermarks"
 )
 
-# Scene prompts: each generates a realistic "in-use" image from the product photo
+# Scene prompts: 3 hands-free + 1 minimal-hand. Hands-free reduces the
+# uncanny-valley risk when these stills are animated by Wan 2.5 (morphing
+# fingers were flagged as a conversion-killer on TikTok). Lifestyle variety
+# (studio, bedroom shelf, fingertips, macro) hits TikTok's multi-environment
+# engagement boost observed on higher-performing posts.
 TOY_SCENE_PROMPTS = [
+    # 1. HERO STUDIO — no people
     (
-        "Place this single product on a clean table, one hand reaching to pick it up, "
-        "overhead angle, bright natural lighting, only one copy of the product visible, "
+        "Single product centered on a clean wooden surface, dramatic side lighting, "
+        "studio product photography, no people, no hands, only the product visible, "
+        "shallow depth of field, sharp focus on product details, "
         f"TikTok vertical 9:16 format, authentic phone-shot feel, {_NO_TEXT_GUARD}"
     ),
+    # 2. LIFESTYLE BEDROOM — environmental, no hands
     (
-        "One pair of hands holding up this single product to the camera, showing it off, "
-        "shallow depth of field, warm soft lighting, simple clean background, "
-        f"only one product in frame, vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
+        "This product displayed on a wooden bedroom shelf next to a few books and a small lamp, "
+        "warm evening light, cozy bedroom aesthetic, no hands in frame, "
+        "shallow depth of field, candid lifestyle composition, "
+        f"vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
     ),
+    # 3. MINIMAL HAND — fingertips only (lowest morphing risk)
     (
-        "Close-up of this single product sitting on a white surface, one hand touching it, "
-        "product photography style, soft even lighting, no duplicates, "
+        "Just the fingertips of one hand entering from frame edge to gently steady this product, "
+        "minimal hand visible, focus stays on the product, "
+        "soft natural daylight, simple clean background, "
         f"vertical 9:16 TikTok content, sharp focus on the product, {_NO_TEXT_GUARD}"
     ),
+    # 4. MACRO CLOSE-UP — no people
     (
-        "This single product centered in frame on a soft pastel background, "
-        "one hand gently presenting it from the side, aesthetic flat lay, "
-        f"only one product visible, vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
+        "Macro close-up of this product on neutral textured fabric, "
+        "soft natural light from a window, extreme shallow depth of field, "
+        "no people, no hands, focus on intricate product details, "
+        f"vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
     ),
 ]
 

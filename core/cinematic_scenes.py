@@ -30,12 +30,12 @@ SCENE_BUCKETS = {
         "low-angle heroic shot on a clean white surface",
     ],
     "action-figure": [
-        "inside a collector's glass display cabinet",
-        "posed on a shelf with comic books in the background",
-        "macro shot focused on high-detail paint and accessories",
-        "dynamic low-angle pose on a gaming setup desk",
-        "unboxing style: sitting inside a pristine open box",
-        "dramatic lighting on a black textured surface",
+        "inside a collector's glass display cabinet, soft volumetric backlight, shallow depth of field",
+        "posed on a shelf with comic books in the background, warm rim lighting, cinematic bokeh",
+        "macro shot focused on high-detail paint and accessories, shallow depth of field with bokeh",
+        "dynamic low-angle hero pose on a gaming setup desk, subtle atmospheric haze, dramatic key light",
+        "unboxing style: sitting inside a pristine open box, soft natural daylight, gentle highlights",
+        "dramatic side lighting on a dark textured surface, cinematic god-rays from above, anime-edit aesthetic",
     ],
     "plushie": [
         "nestled in a cozy aesthetic bedroom setup",

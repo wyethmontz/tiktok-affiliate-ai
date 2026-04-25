@@ -21,6 +21,17 @@ VOICE_OPTIONS = {
 }
 DEFAULT_VOICE_ID = VOICE_OPTIONS["jessica"]  # best for upbeat TikTok affiliate content
 
+# Conversational TikTok creator energy — feedback flagged the previous
+# settings as "clean ad-announcer voice" which hurts authenticity on TikTok.
+# Lower stability + similarity = more pitch/pacing variation. Higher style =
+# more emotional inflection. Targets "Filipina sharing finds" not "ad voice".
+_VOICE_SETTINGS = {
+    "stability": 0.35,
+    "similarity_boost": 0.45,
+    "style": 0.7,
+    "use_speaker_boost": True,
+}
+
 
 def _extract_script(copy: str) -> str:
     """Extract just the script portion from copy (remove CTA/hashtags)."""
@@ -49,12 +60,7 @@ def generate_voiceover(copy: str, voice_id: str = DEFAULT_VOICE_ID) -> str | Non
     body = {
         "text": text,
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.55,
-            "style": 0.55,
-            "use_speaker_boost": True,
-        }
+        "voice_settings": _VOICE_SETTINGS,
     }
 
     try:
@@ -93,12 +99,7 @@ def generate_voiceover_with_timestamps(copy: str, voice_id: str = DEFAULT_VOICE_
     body = {
         "text": text,
         "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.55,
-            "style": 0.55,
-            "use_speaker_boost": True,
-        }
+        "voice_settings": _VOICE_SETTINGS,
     }
 
     try:
