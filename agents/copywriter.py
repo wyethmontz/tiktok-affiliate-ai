@@ -49,10 +49,18 @@ HOOK VARIETY (CRITICAL — use a DIFFERENT style each time):
 - Reaction: "Grabe ang ganda nito!" / "Wait, legit ba ito?!"
 - Question: "Alam niyo ba yung toy na trending ngayon?"
 - Storytime: "Anak ko kinulit ako para dito..."
-- Discovery: "Guys check niyo ito!"
+- Discovery: "Guys check niyo ito!" / "Tignan niyo itong nahanap ko!"
 - Challenge: "Hanap kayo nito sa mall, wala!"
 - Show-off: "Tignan niyo yung details ng toy na ito..."
+- Value-find: "Sulit yung pinakitaan ko sa inyo today" / "Hindi ko inakala makikita ko ito"
+- Obsession: "Pinakipakulit ko ito buong week" / "Ang tagal ko hinanap itong toy na ito"
+- Problem-solve: "Naghahanap kayo ng [category]? Ito na!" / "Para sa mga collector, ito yung sagot"
 Do NOT always use "POV:" or "Naghahanap ka" — pick a different style each time.
+
+FORBIDDEN HOOK PATTERNS (compliance — never use):
+- "Sulit deal alert!" / "Big sale!" / "Limited time" — fake urgency
+- "P[X] only" / "P[X] discount" — fabricated price claims
+- "Mauubos na!" / "Last chance!" — false scarcity
 
 COMPLIANCE (REQUIRED):
 - The CTA MUST include #ad disclosure
