@@ -278,57 +278,78 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 _download_file(url, img_path)
                 image_files.append(img_path)
 
-            # Calculate scene duration from voiceover length
+            # Calculate total video duration (matches voiceover or default 16s)
             audio_duration = _get_audio_duration(audio_path) if audio_path else None
-            num_scenes = len(image_files)
-            if audio_duration and num_scenes > 0:
-                scene_duration = audio_duration / num_scenes
-                print(f"[VIDEO] Voiceover is {audio_duration:.1f}s — {scene_duration:.1f}s per scene")
-            else:
-                scene_duration = 4
-                print(f"[VIDEO] No voiceover to sync — using {scene_duration}s per scene")
+            num_images = len(image_files)
+            total_video_duration = audio_duration if audio_duration else 16.0
 
-            # Simple, reliable motion: scale up, crop center, apply gentle zoom
-            # No panning (avoids edge artifacts), just centered zoom in/out
-            for i, img_path in enumerate(image_files):
-                clip_path = os.path.join(tmpdir, f"scene_{i}.mp4")
-                total_frames = int(scene_duration * 25)
+            # Double-pass Ken Burns: each source image is rendered TWICE with
+            # different zoom motions, then interleaved (A1, B1, C1, D1, A2,
+            # B2, C2, D2). Result: 8 visual cuts in the same total duration =
+            # ~1.5-2s per cut vs the old ~3.5-4s. Reviewer feedback flagged
+            # the slow pacing as a "scroll risk" on TikTok. Zero added image-
+            # gen cost — only adds ~20-40s of FFmpeg render time per video.
+            SUB_PASSES = 2
+            num_scenes_total = num_images * SUB_PASSES
+            sub_scene_duration = total_video_duration / num_scenes_total
+            print(f"[VIDEO] Double-pass Ken Burns: {num_images} images × {SUB_PASSES} passes "
+                  f"= {num_scenes_total} cuts × {sub_scene_duration:.2f}s each "
+                  f"(total {total_video_duration:.1f}s)")
 
-                # Alternate between zoom-in and zoom-out per scene
-                if i % 2 == 0:
-                    # Zoom in: 1.0 → 1.1
-                    zoom_expr = f"1.0+(on/{total_frames})*0.1"
-                else:
-                    # Zoom out: 1.1 → 1.0
-                    zoom_expr = f"1.1-(on/{total_frames})*0.1"
+            # Per-pass motion: pass 1 alternates zoom-in/out, pass 2 reverses
+            # (so the same image gets opposite motion the second time it appears)
+            def _zoom_expr(pass_idx: int, image_idx: int, frames: int) -> tuple[str, str]:
+                """Return (expr, label) for the zoom motion at this pass+image."""
+                if pass_idx == 0:
+                    if image_idx % 2 == 0:
+                        return f"1.0+(on/{frames})*0.1", "zoom-in"
+                    return f"1.1-(on/{frames})*0.1", "zoom-out"
+                # Pass 2 — reversed
+                if image_idx % 2 == 0:
+                    return f"1.1-(on/{frames})*0.1", "zoom-out"
+                return f"1.0+(on/{frames})*0.1", "zoom-in"
 
-                vf = (
-                    f"scale=2160:3840:force_original_aspect_ratio=increase,"
-                    f"crop=2160:3840,"
-                    f"zoompan=z='{zoom_expr}'"
-                    f":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-                    f":d={total_frames}:s=1080x1920:fps=25"
-                )
+            # Render each image twice (pass 0 and pass 1), then interleave so
+            # the cycle plays through once before any image repeats.
+            clips_by_pass: list[list[str]] = [[] for _ in range(SUB_PASSES)]
+            total_frames_per_clip = max(1, int(sub_scene_duration * 25))
 
-                cmd = [
-                    "ffmpeg", "-y",
-                    "-loop", "1",
-                    "-i", img_path,
-                    "-vf", vf,
-                    "-t", str(scene_duration),
-                    "-c:v", "libx264",
-                    "-pix_fmt", "yuv420p",
-                    "-r", "25",
-                    clip_path
-                ]
+            for pass_idx in range(SUB_PASSES):
+                for i, img_path in enumerate(image_files):
+                    clip_path = os.path.join(tmpdir, f"scene_p{pass_idx}_{i}.mp4")
+                    zoom_expr, label = _zoom_expr(pass_idx, i, total_frames_per_clip)
 
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-                if result.returncode != 0:
-                    print(f"[VIDEO] FFmpeg scene {i} error: {result.stderr[-500:]}")
-                    continue
+                    vf = (
+                        f"scale=2160:3840:force_original_aspect_ratio=increase,"
+                        f"crop=2160:3840,"
+                        f"zoompan=z='{zoom_expr}'"
+                        f":x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+                        f":d={total_frames_per_clip}:s=1080x1920:fps=25"
+                    )
 
-                scene_clips.append(clip_path)
-                print(f"[VIDEO] Scene {i + 1}: {'zoom-in' if i % 2 == 0 else 'zoom-out'}")
+                    cmd = [
+                        "ffmpeg", "-y",
+                        "-loop", "1",
+                        "-i", img_path,
+                        "-vf", vf,
+                        "-t", f"{sub_scene_duration:.3f}",
+                        "-c:v", "libx264",
+                        "-pix_fmt", "yuv420p",
+                        "-r", "25",
+                        clip_path
+                    ]
+
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                    if result.returncode != 0:
+                        print(f"[VIDEO] FFmpeg pass {pass_idx} scene {i} error: {result.stderr[-500:]}")
+                        continue
+
+                    clips_by_pass[pass_idx].append(clip_path)
+                    print(f"[VIDEO] Pass {pass_idx + 1} scene {i + 1}: {label}")
+
+            # Interleave passes: pass 1 cycle complete, then pass 2 cycle
+            for pass_clips in clips_by_pass:
+                scene_clips.extend(pass_clips)
 
         if not scene_clips:
             print("[VIDEO] No scene clips generated")

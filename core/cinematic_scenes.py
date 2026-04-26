@@ -46,12 +46,12 @@ SCENE_BUCKETS = {
         "close-up shot on a soft knitted blanket",
     ],
     "building-blocks": [
-        "on a bright workbench with scattered loose bricks around",
-        "displayed as a centerpiece on a modern living room shelf",
-        "partially built with a focus on the structural complexity",
-        "under bright studio lighting on a plain neutral-gray platform",
-        "macro shot of the small figures positioned in a scene",
-        "on a playmat with other structures in the background",
+        "on a bright workbench with scattered loose bricks around, specular highlights on smooth ABS plastic surfaces, matte texture detail",
+        "displayed as a centerpiece on a modern living room shelf, realistic plastic material with subtle gloss reflections",
+        "partially built with a focus on the structural complexity, sharp specular highlights on plastic edges",
+        "under bright studio lighting on a plain neutral-gray platform, matte ABS plastic finish with realistic material reflections",
+        "macro shot of the small figures positioned in a scene, glossy plastic surfaces with realistic light bounce, fine surface detail",
+        "on a playmat with other structures in the background, accurate plastic material rendering with subtle highlights",
     ],
     # Fallback for products that don't fit the 4 main buckets
     # (beyblades, drones, foam blasters, baby toys, kitchen sets, etc.)

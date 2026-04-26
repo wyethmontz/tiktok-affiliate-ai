@@ -18,6 +18,16 @@ _NO_TEXT_GUARD = (
     "NO promotional banners, NO price tags, NO watermarks"
 )
 
+# Material realism guard: Kontext defaults to flat/cartoonish plastic rendering
+# unless told otherwise. This makes red/yellow plastic toys look "cheap" — a
+# known conversion-killer flagged in 4/26 reviewer feedback. Adds physically-
+# accurate material descriptors that work across plastic, fabric, metal toys.
+_MATERIAL_REALISM = (
+    "realistic material rendering with accurate surface texture, "
+    "specular highlights and subtle reflections, "
+    "high-quality product photography detail"
+)
+
 # Scene prompts: 3 hands-free + 1 minimal-hand. Hands-free reduces the
 # uncanny-valley risk when these stills are animated by Wan 2.5 (morphing
 # fingers were flagged as a conversion-killer on TikTok). Lifestyle variety
@@ -29,28 +39,28 @@ TOY_SCENE_PROMPTS = [
         "Single product centered on a clean wooden surface, dramatic side lighting, "
         "studio product photography, no people, no hands, only the product visible, "
         "shallow depth of field, sharp focus on product details, "
-        f"TikTok vertical 9:16 format, authentic phone-shot feel, {_NO_TEXT_GUARD}"
+        f"TikTok vertical 9:16 format, authentic phone-shot feel, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     # 2. LIFESTYLE BEDROOM — environmental, no hands
     (
         "This product displayed on a wooden bedroom shelf next to a few books and a small lamp, "
         "warm evening light, cozy bedroom aesthetic, no hands in frame, "
         "shallow depth of field, candid lifestyle composition, "
-        f"vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
+        f"vertical 9:16 TikTok style, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     # 3. MINIMAL HAND — fingertips only (lowest morphing risk)
     (
         "Just the fingertips of one hand entering from frame edge to gently steady this product, "
         "minimal hand visible, focus stays on the product, "
         "soft natural daylight, simple clean background, "
-        f"vertical 9:16 TikTok content, sharp focus on the product, {_NO_TEXT_GUARD}"
+        f"vertical 9:16 TikTok content, sharp focus on the product, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     # 4. MACRO CLOSE-UP — no people
     (
         "Macro close-up of this product on neutral textured fabric, "
         "soft natural light from a window, extreme shallow depth of field, "
         "no people, no hands, focus on intricate product details, "
-        f"vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
+        f"vertical 9:16 TikTok showcase style, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
 ]
 
@@ -58,19 +68,19 @@ TOY_SCENE_PROMPTS = [
 GENERIC_SCENE_PROMPTS = [
     (
         "Close-up of hands unboxing this product from packaging, "
-        f"overhead shot, natural lighting, TikTok vertical 9:16 format, {_NO_TEXT_GUARD}"
+        f"overhead shot, natural lighting, TikTok vertical 9:16 format, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     (
         "A person's hands holding this product up to camera, showing it off proudly, "
-        f"shallow depth of field, clean background, vertical 9:16 TikTok style, {_NO_TEXT_GUARD}"
+        f"shallow depth of field, clean background, vertical 9:16 TikTok style, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     (
         "This product being used in a real-life setting, hands interacting with it, "
-        f"close-up shot, warm natural lighting, vertical 9:16 social media content, {_NO_TEXT_GUARD}"
+        f"close-up shot, warm natural lighting, vertical 9:16 social media content, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
     (
         "Aesthetic product shot of this item with a hand reaching into frame, "
-        f"soft lighting, clean background, vertical 9:16 TikTok showcase style, {_NO_TEXT_GUARD}"
+        f"soft lighting, clean background, vertical 9:16 TikTok showcase style, {_MATERIAL_REALISM}, {_NO_TEXT_GUARD}"
     ),
 ]
 
