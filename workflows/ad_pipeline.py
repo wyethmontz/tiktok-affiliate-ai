@@ -213,11 +213,24 @@ def _run_cinematic_pipeline(input_data, _step):
         "past_hooks": past_hooks,
     })
 
-    # Parse CAPTION + HASHTAGS from the copywriter output
-    caption_match = re.search(r'CAPTION:\s*(.+?)(?:HASHTAGS:|$)', copy, re.DOTALL)
-    hashtag_match = re.search(r'HASHTAGS:\s*(.+?)$', copy, re.DOTALL)
+    # Parse CAPTION + HASHTAGS + OVERLAY_HOOK from the copywriter output
+    caption_match = re.search(r'CAPTION:\s*(.+?)(?:HASHTAGS:|OVERLAY_HOOK:|$)', copy, re.DOTALL)
+    hashtag_match = re.search(r'HASHTAGS:\s*(.+?)(?:OVERLAY_HOOK:|$)', copy, re.DOTALL)
+    overlay_match = re.search(r'OVERLAY_HOOK:\s*(.+?)$', copy, re.DOTALL)
     caption_text = caption_match.group(1).strip() if caption_match else copy.strip()
     hashtags = hashtag_match.group(1).strip() if hashtag_match else "#AIgenerated #ToysPH #BudolFinds"
+
+    # OVERLAY_HOOK: short pick-one question burned at top of video.
+    # Constraints: 35 chars max, ASCII-only (FFmpeg dejavu-core has no emoji
+    # glyphs). Falls back to "Follow for more toy finds" if missing/invalid.
+    overlay_hook = overlay_match.group(1).strip() if overlay_match else ""
+    # Strip any emoji that slipped through (FFmpeg drawtext can't render them)
+    overlay_hook = re.sub(r'[\U0001F000-\U0001FFFF\U00002600-\U000027BF]', '', overlay_hook).strip()
+    if not overlay_hook or len(overlay_hook) > 35:
+        overlay_hook = "Follow for more toy finds"
+        print(f"[CINEMATIC] OVERLAY_HOOK fallback (raw='{overlay_match.group(1).strip()[:50] if overlay_match else 'missing'}')")
+    else:
+        print(f"[CINEMATIC] OVERLAY_HOOK: {overlay_hook!r}")
 
     # Strip any forbidden affiliate tags that slipped through
     forbidden = {"#ad", "#sponsored", "#affiliate", "#tiktokshopph"}
@@ -273,7 +286,7 @@ def _run_cinematic_pipeline(input_data, _step):
             user_video_urls=None,
             word_timestamps=None,
             bgm_style=bgm_style,
-            cta_overlay_text="Follow for more toy finds",
+            cta_overlay_text=overlay_hook,
         )
     except Exception as e:
         print(f"[CINEMATIC] Assembly failed: {e}")

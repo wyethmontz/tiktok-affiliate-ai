@@ -62,6 +62,14 @@ HASHTAG RULES:
 - Include #ToysPH or #BudolFinds for general discoverability
 - NO #ad, NO #sponsored, NO #TikTokShopPH (those route to commerce algorithm)
 
+OVERLAY_HOOK RULES (this gets BURNED on the video at top of frame):
+- MAX 35 characters — must fit cleanly at top-center of 9:16 frame
+- NO emoji — FFmpeg's bundled font cannot render emoji glyphs (they show as tofu boxes)
+- Pick-one format strongly preferred: "X or Y?" (forces viewer to mentally choose → comment urge)
+- Product-specific (not generic) — names a character, attribute, or detail viewers can react to
+- Question form ONLY — declaratives don't drive comments
+- This is DIFFERENT from the caption question. The caption is below the video; the overlay is on top.
+
 Return EXACTLY in this format:
 
 CAPTION:
@@ -72,6 +80,9 @@ CAPTION:
 HASHTAGS:
 [4-6 space-separated hashtags including #AIgenerated, NO #ad, NO #sponsored]
 
+OVERLAY_HOOK:
+[short pick-one question, max 35 chars, NO emoji, product-specific. Example for Levi: "Levi or Eren, sino mas pogi?"]
+
 EXAMPLE (for a plushie):
 
 CAPTION:
@@ -81,6 +92,9 @@ Grabe kasi sobrang lambot, parang baby na lang ako dito.
 
 HASHTAGS:
 #AIgenerated #PlushiePH #SanrioPH #BudolFinds #KawaiiPH
+
+OVERLAY_HOOK:
+Cute or creepy?
 """
 
     return call_claude(prompt)
