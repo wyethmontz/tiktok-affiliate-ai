@@ -225,3 +225,10 @@ google-creds.json
 
 # Local sheet backups (timestamped CSVs from update_30day_plan.py)
 scripts/backups/
+
+# Local planning docs (never push)
+ROADMAP.md
+DEPLOY_GUIDE.md
+infrastructure/terraform/*.tfvars
+infrastructure/terraform/.terraform/
+infrastructure/terraform/.terraform.lock.hcl

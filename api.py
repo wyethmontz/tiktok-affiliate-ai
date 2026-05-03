@@ -262,3 +262,8 @@ def analytics_insights(request: Request):
         return {"insights": insights or "Not enough data yet. Generate at least 3 ads."}
     except Exception as e:
         return {"insights": f"Could not generate insights: {str(e)}"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

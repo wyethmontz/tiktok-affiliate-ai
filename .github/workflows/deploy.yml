@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only deploy when CI passed — not on failure or cancellation
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy prod compose file to EC2 (first-run idempotent)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: docker-compose.prod.yml
+          target: /opt/app/
+          overwrite: true
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 120s
+          script: |
+            set -euo pipefail
+
+            cd /opt/app
+
+            # Rename to the standard compose filename
+            mv -f docker-compose.prod.yml docker-compose.yml
+
+            # Log in to ECR
+            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
+              | docker login --username AWS --password-stdin ${{ vars.ECR_REGISTRY }}
+
+            export BACKEND_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_BACKEND_REPO }}:latest"
+            export FRONTEND_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_FRONTEND_REPO }}:latest"
+
+            docker pull "$BACKEND_IMAGE"
+            docker pull "$FRONTEND_IMAGE"
+
+            BACKEND_IMAGE="$BACKEND_IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \
+              docker compose up -d --remove-orphans
+
+            docker image prune -f
