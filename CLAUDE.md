@@ -766,7 +766,7 @@ npm test -- --ci --passWithNoTests
 
 **CI / GitHub Actions**
 - Workflow `on: push/pull_request` branch filters must match the repo's actual default branch (`master`, not `main`) — mismatched branch name silently skips CI on all PRs
-- Always verify action versions exist before using them — `aquasecurity/trivy-action@0.28.0` did not exist (latest is `0.36.0`); check via `gh api repos/<owner>/<repo>/releases/latest --jq '.tag_name'`
+- Always verify action versions exist and use the correct tag format — trivy-action tags use a `v` prefix: `aquasecurity/trivy-action@v0.36.0`, not `0.36.0`; check tags via `gh api repos/<owner>/<repo>/tags --jq '.[].name' | head -5`
 
 ---
 
