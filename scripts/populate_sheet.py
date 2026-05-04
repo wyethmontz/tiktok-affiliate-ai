@@ -114,9 +114,12 @@ WEEK_COLORS = {
 
 
 def get_week(day_num):
-    if day_num <= 7: return 1
-    if day_num <= 14: return 2
-    if day_num <= 21: return 3
+    if day_num <= 7:
+        return 1
+    if day_num <= 14:
+        return 2
+    if day_num <= 21:
+        return 3
     return 4
 
 
@@ -137,7 +140,8 @@ def main():
     print(f"Writing {len(PLAN)} rows...")
     def trim_name(name, max_len=30):
         name = name.strip()
-        if len(name) <= max_len: return name
+        if len(name) <= max_len:
+            return name
         trimmed = name[:max_len].rsplit(' ', 1)[0]
         return trimmed if trimmed else name[:max_len]
 

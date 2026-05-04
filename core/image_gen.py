@@ -59,11 +59,11 @@ def generate_images(media_prompts: str, max_images: int = 4) -> list[str | None]
     # Extract numbered prompts (e.g. "1. ...", "2. ...")
     lines = re.findall(r'\d+\.\s*(.+)', media_prompts)
     # Strip markdown formatting and scene labels
-    lines = [re.sub(r'\*{1,2}', '', l) for l in lines]  # remove bold/italic markers
-    lines = [re.sub(r'^Scene\s*\d+:?\s*', '', l, flags=re.IGNORECASE).strip() for l in lines]
-    lines = [l for l in lines if l]
+    lines = [re.sub(r'\*{1,2}', '', line) for line in lines]
+    lines = [re.sub(r'^Scene\s*\d+:?\s*', '', line, flags=re.IGNORECASE).strip() for line in lines]
+    lines = [line for line in lines if line]
     if not lines:
-        lines = [l.strip() for l in media_prompts.split('\n') if l.strip()]
+        lines = [line.strip() for line in media_prompts.split('\n') if line.strip()]
 
     lines = lines[:max_images]
 
@@ -87,7 +87,7 @@ def generate_images(media_prompts: str, max_images: int = 4) -> list[str | None]
         except Exception as e:
             # Retry once after a longer wait on rate limit
             if "429" in str(e):
-                print(f"[IMAGE GEN] Rate limited, retrying in 10s...")
+                print("[IMAGE GEN] Rate limited, retrying in 10s...")
                 time.sleep(10)
                 try:
                     url = _run_prediction(prompt)

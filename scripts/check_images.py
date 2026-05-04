@@ -48,4 +48,4 @@ while True:
 print(f"\nScanned {total} ads")
 print(f"{broken} have broken localhost URLs")
 print(f"{no_images} have no images")
-print(f"\nRun cleanup_supabase.py to delete broken entries.")
+print("\nRun cleanup_supabase.py to delete broken entries.")

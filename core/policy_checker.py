@@ -101,7 +101,7 @@ def get_latest_rules() -> str | None:
         rules = _extract_rules(raw_content)
         if rules and "No relevant policy" not in rules:
             _save_cache(rules, raw_content)
-            print(f"[POLICY] Extracted and cached latest rules")
+            print("[POLICY] Extracted and cached latest rules")
             return rules
     except Exception as e:
         print(f"[POLICY] Could not extract rules: {e}")

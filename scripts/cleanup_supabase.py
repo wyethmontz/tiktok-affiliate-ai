@@ -29,7 +29,7 @@ except Exception as e:
     deleted_old = 0
 
 # Step 2: Page through remaining ads and delete broken localhost URLs
-print(f"\nChecking for broken localhost URLs...")
+print("\nChecking for broken localhost URLs...")
 PAGE_SIZE = 10
 offset = 0
 deleted_broken = 0

@@ -189,7 +189,7 @@ def generate_product_scenes(product_image_url: str, num_scenes: int = 4,
                 print(f"[KONTEXT] Scene {i + 1} failed — no output")
         except Exception as e:
             if "429" in str(e):
-                print(f"[KONTEXT] Rate limited, retrying in 10s...")
+                print("[KONTEXT] Rate limited, retrying in 10s...")
                 time.sleep(10)
                 try:
                     url = _run_kontext(product_image_url, prompt)

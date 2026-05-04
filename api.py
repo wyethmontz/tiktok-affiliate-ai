@@ -12,7 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from workflows.ad_pipeline import run_pipeline
 from workflows.regenerate_video import run_regenerate_pipeline
 from core.auth import get_current_user
-from core.db import save_ad, supabase
+from core.db import supabase
 from core.job_store import jobs
 from core.analytics import get_summary
 from agents.optimizer import run_optimizer

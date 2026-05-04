@@ -4,7 +4,6 @@ def run_compliance(input_data):
     """Check ad content for TikTok policy violations before publishing."""
     copy = input_data["copy"]
     creative = input_data.get("creative", "")
-    product = input_data.get("product", "")
     original_input = input_data.get("original_input", "")
     latest_rules = input_data.get("latest_rules", "")
 

@@ -25,7 +25,8 @@ records = ws.get_all_values()
 
 updates = []
 for i, row in enumerate(records):
-    if i == 0: continue
+    if i == 0:
+        continue
     pipeline_input = row[4] if len(row) > 4 else ''
     current_name = row[9] if len(row) > 9 else ''
 

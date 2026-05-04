@@ -15,7 +15,6 @@ from core.cinematic_scenes import generate_cinematic_scenes
 from core.cinematic_video import generate_cinematic_clips
 from core.policy_checker import get_latest_rules
 from core.video_gen import generate_video_clips
-from core.voiceover import generate_voiceover
 from core.llm import call_claude
 from core.video_assembler import assemble_video
 
@@ -427,7 +426,7 @@ def run_pipeline(input_data, on_step=None):
         if attempt <= MAX_COMPLIANCE_RETRIES:
             if attempt <= 2:
                 _step(f"Fixing compliance issues (attempt {attempt})...")
-                print(f"[COMPLIANCE] Failed — fixing specific issues...")
+                print("[COMPLIANCE] Failed — fixing specific issues...")
             else:
                 _step(f"Rewriting script from scratch (attempt {attempt})...")
                 print(f"[COMPLIANCE] Failed {attempt}x — writing brand new script...")
@@ -482,7 +481,7 @@ def run_pipeline(input_data, on_step=None):
 
         # Fallback: if Kontext generated nothing, use raw product photos
         if not image_urls:
-            print(f"[PIPELINE] Using raw product photos as fallback")
+            print("[PIPELINE] Using raw product photos as fallback")
             image_urls = product_image_urls
     else:
         # AI MODE — generate everything
@@ -527,7 +526,7 @@ def run_pipeline(input_data, on_step=None):
         except Exception:
             video_clip_urls = []
     elif not has_user_videos:
-        print(f"[PIPELINE] Using free FFmpeg video mode (AI video gen disabled)")
+        print("[PIPELINE] Using free FFmpeg video mode (AI video gen disabled)")
 
     # STEP 10 — VIDEO ASSEMBLY
     # BGM auto-picked by product type (e.g. action figures get cinematic-ambient

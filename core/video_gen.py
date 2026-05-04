@@ -92,9 +92,9 @@ def generate_video_clips(image_urls: list[str], media_prompts: str,
 
     # Extract prompts to use as motion descriptions
     lines = re.findall(r'\d+\.\s*(.+)', media_prompts)
-    lines = [re.sub(r'\*{1,2}', '', l) for l in lines]
-    lines = [re.sub(r'^Scene\s*\d+:?\s*', '', l, flags=re.IGNORECASE).strip() for l in lines]
-    lines = [l for l in lines if l]
+    lines = [re.sub(r'\*{1,2}', '', line) for line in lines]
+    lines = [re.sub(r'^Scene\s*\d+:?\s*', '', line, flags=re.IGNORECASE).strip() for line in lines]
+    lines = [line for line in lines if line]
 
     video_urls = []
     for i, image_url in enumerate(image_urls):
@@ -116,7 +116,7 @@ def generate_video_clips(image_urls: list[str], media_prompts: str,
                 print(f"[VIDEO GEN] Scene {i + 1} failed — no output")
         except Exception as e:
             if "429" in str(e):
-                print(f"[VIDEO GEN] Rate limited, retrying in 15s...")
+                print("[VIDEO GEN] Rate limited, retrying in 15s...")
                 time.sleep(15)
                 try:
                     url = _run_video_prediction(image_url, motion_prompt, num_frames=frames_per_clip)

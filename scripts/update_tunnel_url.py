@@ -46,9 +46,8 @@ ws.update("A1", rows)
 
 # Make the frontend URL cell big/bold so it's easy to copy on phone
 ws.format("A1", {
-    "textFormat": {"bold": True, "fontSize": 14},
-    "backgroundColor": {"red": 0.2, "green": 0.2, "blue": 0.2},
     "textFormat": {"bold": True, "fontSize": 14, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
+    "backgroundColor": {"red": 0.2, "green": 0.2, "blue": 0.2},
 })
 ws.format("A5", {
     "textFormat": {"bold": True, "fontSize": 12},

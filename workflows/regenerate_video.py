@@ -2,7 +2,7 @@
 Style-aware: Discovery rows use cinematic_scenes + Ken Burns + mood BGM + OVERLAY_HOOK.
 Affiliate rows use Kontext + voiceover + captions + dual PIP + product-matched BGM."""
 import re
-from core.db import save_ad, supabase
+from core.db import supabase
 from core.product_scenes import generate_product_scenes
 from core.cinematic_scenes import generate_cinematic_scenes
 from core.cinematic_video import generate_cinematic_clips
@@ -23,10 +23,14 @@ def _detect_product_type(product_name: str) -> str:
                  "spider man", "spiderman", "transformers", "bumblebee", "gundam", "beyblade"]
     diecast_kw = ["car", "suv", "truck", "die-cast", "diecast", "lightning mcqueen",
                   "land rover", "vehicle", "monster truck", "excavator", "rc car", "drone"]
-    if any(k in p for k in plushie_kw): return "plushie"
-    if any(k in p for k in building_kw): return "building-blocks"
-    if any(k in p for k in figure_kw): return "action-figure"
-    if any(k in p for k in diecast_kw): return "die-cast"
+    if any(k in p for k in plushie_kw):
+        return "plushie"
+    if any(k in p for k in building_kw):
+        return "building-blocks"
+    if any(k in p for k in figure_kw):
+        return "action-figure"
+    if any(k in p for k in diecast_kw):
+        return "die-cast"
     return "generic"
 
 

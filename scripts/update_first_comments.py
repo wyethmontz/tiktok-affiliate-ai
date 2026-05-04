@@ -97,7 +97,7 @@ for i, row in enumerate(records):
     )
 
     if needs_update:
-        lines = [l.strip() for l in caption.split("\n") if l.strip()]
+        lines = [line.strip() for line in caption.split("\n") if line.strip()]
         comment_text = build_affiliate_comment(lines)
         comment_updates.append({
             'range': f'{FIRST_COMMENT_COL_A1}{row_num}',

@@ -470,7 +470,7 @@ def assemble_video(image_urls: list[str], voiceover_data: str | None, copy: str,
                 result = subprocess.run(caption_cmd, capture_output=True, text=True, timeout=120)
                 if result.returncode == 0:
                     final_path = captioned_path
-                    print(f"[VIDEO] Captions burned onto video")
+                    print("[VIDEO] Captions burned onto video")
                 else:
                     print(f"[VIDEO] Caption burn failed, using video without captions: {result.stderr[-300:]}")
 
