@@ -758,6 +758,16 @@ npm test -- --ci --passWithNoTests
 - Always upgrade OS packages in Dockerfiles — base images ship with unpatched packages; Trivy will find CRITICAL CVEs without it:
   - Debian/slim: `apt-get upgrade -y` before `apt-get install`
   - Alpine: `apk upgrade --no-cache` as a dedicated `RUN` step in the **runtime** stage (the stage that gets scanned)
+- Non-root users can't write to directories created during `COPY . .` (owned by root) — always `mkdir -p` and `chown` any directory the app writes to at startup, before switching to the non-root user:
+  ```dockerfile
+  RUN useradd --no-create-home --uid 1001 appuser \
+      && mkdir -p /app/uploads \
+      && chown appuser:appuser /app/uploads
+  USER appuser
+  ```
+
+**AWS SSM**
+- `AWS-RunShellScript` runs with `/bin/sh` (dash) by default — `set -o pipefail` is not supported; always start SSM scripts with `#!/bin/bash` as the first line
 
 **Python**
 - Never call `create_client()` or any external service at module level — use lazy init (`if URL and KEY else None`) so imports don't crash when env vars are absent (tests mock at the attribute level, not import-time)
