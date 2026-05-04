@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
@@ -162,7 +162,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Push images to ECR
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           docker push $ECR_REGISTRY/$BACKEND_REPO:${{ github.sha }}
           docker push $ECR_REGISTRY/$BACKEND_REPO:latest
