@@ -12,7 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN useradd --no-create-home --uid 1001 appuser
+RUN useradd --no-create-home --uid 1001 appuser \
+    && mkdir -p /app/uploads \
+    && chown appuser:appuser /app/uploads
 USER appuser
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
