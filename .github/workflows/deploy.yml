@@ -19,42 +19,77 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy prod compose file to EC2 (first-run idempotent)
-        uses: appleboy/scp-action@v0.1.7
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: docker-compose.prod.yml
-          target: /opt/app/
-          overwrite: true
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          timeout: 120s
-          script: |
-            set -euo pipefail
+      - name: Deploy to EC2 via SSM
+        env:
+          INSTANCE_ID: i-07261f58c3758e95b
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          ECR_BACKEND_REPO: ${{ vars.ECR_BACKEND_REPO }}
+          ECR_FRONTEND_REPO: ${{ vars.ECR_FRONTEND_REPO }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        run: |
+          export COMPOSE_B64
+          COMPOSE_B64=$(base64 -w 0 docker-compose.prod.yml)
 
-            cd /opt/app
+          # Build SSM command JSON via Python to avoid shell quoting issues
+          python3 - <<'PYEOF' > /tmp/ssm-input.json
+          import json, os
 
-            # Rename to the standard compose filename
-            mv -f docker-compose.prod.yml docker-compose.yml
+          ecr      = os.environ['ECR_REGISTRY']
+          backend  = f"{ecr}/{os.environ['ECR_BACKEND_REPO']}:latest"
+          frontend = f"{ecr}/{os.environ['ECR_FRONTEND_REPO']}:latest"
+          region   = os.environ['AWS_REGION']
+          b64      = os.environ['COMPOSE_B64']
 
-            # Log in to ECR
-            aws ecr get-login-password --region ${{ vars.AWS_REGION }} \
-              | docker login --username AWS --password-stdin ${{ vars.ECR_REGISTRY }}
+          script = "\n".join([
+              "set -euo pipefail",
+              f"echo '{b64}' | base64 -d > /opt/app/docker-compose.yml",
+              "cd /opt/app",
+              f"aws ecr get-login-password --region {region} | docker login --username AWS --password-stdin {ecr}",
+              f"docker pull {backend}",
+              f"docker pull {frontend}",
+              f"BACKEND_IMAGE={backend} FRONTEND_IMAGE={frontend} docker compose up -d --remove-orphans",
+              "docker image prune -f",
+          ])
 
-            export BACKEND_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_BACKEND_REPO }}:latest"
-            export FRONTEND_IMAGE="${{ vars.ECR_REGISTRY }}/${{ vars.ECR_FRONTEND_REPO }}:latest"
+          print(json.dumps({
+              "InstanceIds": [os.environ['INSTANCE_ID']],
+              "DocumentName": "AWS-RunShellScript",
+              "Parameters": {"commands": [script]},
+              "TimeoutSeconds": 600,
+          }))
+          PYEOF
 
-            docker pull "$BACKEND_IMAGE"
-            docker pull "$FRONTEND_IMAGE"
+          COMMAND_ID=$(aws ssm send-command \
+            --cli-input-json file:///tmp/ssm-input.json \
+            --query "Command.CommandId" \
+            --output text)
+          echo "SSM Command ID: ${COMMAND_ID}"
 
-            BACKEND_IMAGE="$BACKEND_IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \
-              docker compose up -d --remove-orphans
+          # Poll until the command finishes (aws ssm wait only retries 20x at 5s = 100s)
+          for i in $(seq 1 72); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "${COMMAND_ID}" \
+              --instance-id "${INSTANCE_ID}" \
+              --query "Status" --output text 2>/dev/null || echo "Pending")
+            echo "  [${i}/72] ${STATUS}"
+            case "$STATUS" in
+              Success|Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 10
+          done
 
-            docker image prune -f
+          # Print output regardless of status
+          aws ssm get-command-invocation \
+            --command-id "${COMMAND_ID}" \
+            --instance-id "${INSTANCE_ID}" \
+            --query "{Status:Status,Stdout:StandardOutputContent,Stderr:StandardErrorContent}" \
+            --output json
+
+          [ "$STATUS" = "Success" ] || { echo "Deploy failed with status: ${STATUS}"; exit 1; }
