@@ -57,7 +57,7 @@ app.add_middleware(
 
 
 class AdRequest(BaseModel):
-    product: str = Field(..., max_length=200)
+    product: str = Field(..., min_length=1, max_length=200)
     audience: str = Field("", max_length=200)
     goal: str = Field("", max_length=200)
     affiliate_link: str = Field("", max_length=500)

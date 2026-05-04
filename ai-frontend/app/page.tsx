@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { API_URL, authHeaders } from "../lib/api";
 
 export default function Home() {
-  const [product, setProduct] = useState("");
+  const [product, setProduct] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const saved = localStorage.getItem("reuse_ad");
+    if (!saved) return "";
+    const data = JSON.parse(saved) as { product?: string };
+    localStorage.removeItem("reuse_ad");
+    return data.product ?? "";
+  });
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -28,15 +35,6 @@ export default function Home() {
   const [useAiVideo, setUseAiVideo] = useState(false);
   const [bgmStyle] = useState("happy");
   const [postStyle, setPostStyle] = useState<"affiliate" | "cinematic">("affiliate");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("reuse_ad");
-    if (saved) {
-      const data = JSON.parse(saved);
-      setProduct(data.product || "");
-      localStorage.removeItem("reuse_ad");
-    }
-  }, []);
 
   async function uploadFiles(files: FileList | File[]) {
     const fileArray = Array.from(files).filter(f => f.type.startsWith("image/"));
