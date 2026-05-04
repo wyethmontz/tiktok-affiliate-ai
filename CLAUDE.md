@@ -754,6 +754,9 @@ npm test -- --ci --passWithNoTests
 
 ### Rules that have caused CI failures — don't repeat these
 
+**Docker**
+- Always include `apt-get upgrade -y` before `apt-get install` in Dockerfiles — base images ship with unpatched OS packages; without an upgrade step, Trivy will find CRITICAL CVEs in `libssl`, `libexpat`, `libsqlite3`, etc.
+
 **Python**
 - Never call `create_client()` or any external service at module level — use lazy init (`if URL and KEY else None`) so imports don't crash when env vars are absent (tests mock at the attribute level, not import-time)
 - Every Pydantic field that accepts user text must have both `min_length` and `max_length` — missing `min_length=1` on `product` let empty strings through validation
