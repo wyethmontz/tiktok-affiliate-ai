@@ -21,6 +21,8 @@ RUN npm run build
 FROM node:20.19-alpine AS runtime
 WORKDIR /app
 
+RUN apk upgrade --no-cache
+
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY --from=builder --chown=appuser:appgroup /app/.next/standalone ./
