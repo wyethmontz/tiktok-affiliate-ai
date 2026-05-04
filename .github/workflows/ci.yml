@@ -134,7 +134,7 @@ jobs:
             .
 
       - name: Scan backend image (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_REPO }}:${{ github.sha }}
           format: table
@@ -153,7 +153,7 @@ jobs:
             ./ai-frontend
 
       - name: Scan frontend image (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_REPO }}:${{ github.sha }}
           format: table
