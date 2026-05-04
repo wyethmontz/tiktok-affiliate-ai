@@ -1,5 +1,5 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
-FROM node:20.19-alpine AS builder
+FROM node:22.22.2-alpine AS builder
 WORKDIR /app
 
 COPY package*.json .
@@ -18,7 +18,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
 RUN npm run build
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
-FROM node:20.19-alpine AS runtime
+FROM node:22.22.2-alpine AS runtime
 WORKDIR /app
 
 RUN apk upgrade --no-cache

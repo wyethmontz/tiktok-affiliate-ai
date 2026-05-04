@@ -386,7 +386,7 @@ CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "
 ```dockerfile
 # Multi-stage: build stage is heavy (devDeps + Next.js compiler)
 # Runtime stage is lean (only production output)
-FROM node:20.19-alpine AS builder
+FROM node:22.22.2-alpine AS builder
 WORKDIR /app
 COPY package*.json .
 RUN npm ci
@@ -400,7 +400,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
 RUN npm run build
 
 # Runtime stage — no devDeps, no source, no build tools
-FROM node:20.19-alpine AS runtime
+FROM node:22.22.2-alpine AS runtime
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder --chown=appuser:appgroup /app/.next/standalone ./
