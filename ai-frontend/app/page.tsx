@@ -208,8 +208,18 @@ export default function Home() {
         style: postStyle,
       }, { headers });
       await pollJob(res.data.job_id);
-    } catch {
-      setError("Failed to connect to backend. Is it running? You may need to sign in.");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setError("Not signed in. Please sign in and try again.");
+        } else if (err.response) {
+          setError(`Backend error ${err.response.status}: ${err.response.data?.detail ?? "unknown"}`);
+        } else {
+          setError("Cannot reach backend. Is it running? (Check BACKEND_URL in .env.local)");
+        }
+      } else {
+        setError("Unexpected error — check the browser console.");
+      }
       setLoading(false);
       setCurrentStep("");
     }
