@@ -155,10 +155,7 @@ async def upload_image(request: Request, file: UploadFile = File(...),
     with open(filepath, "wb") as f:
         f.write(contents)
 
-    base_url = str(request.base_url).rstrip("/")
-    image_url = f"{base_url}/uploads/{filename}"
-
-    return {"url": image_url, "filename": filename}
+    return {"url": f"/uploads/{filename}", "filename": filename}
 
 
 @app.post("/upload-video")
@@ -180,10 +177,7 @@ async def upload_video(request: Request, file: UploadFile = File(...),
     with open(filepath, "wb") as f:
         f.write(contents)
 
-    base_url = str(request.base_url).rstrip("/")
-    video_url = f"{base_url}/uploads/{filename}"
-
-    return {"url": video_url, "filename": filename}
+    return {"url": f"/uploads/{filename}", "filename": filename}
 
 
 @app.post("/generate-ad")

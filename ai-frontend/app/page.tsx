@@ -51,7 +51,10 @@ export default function Home() {
         const formData = new FormData();
         formData.append("file", file);
         const res = await axios.post(`${API_URL}/upload-image`, formData, { headers });
-        setImageUrls(prev => [...prev, res.data.url]);
+        const imageUrl = res.data.url.startsWith("/")
+          ? `${window.location.origin}${res.data.url}`
+          : res.data.url;
+        setImageUrls(prev => [...prev, imageUrl]);
         setImagePreviews(prev => [...prev, URL.createObjectURL(file)]);
       } catch {
         setError("Failed to upload image");
@@ -150,7 +153,10 @@ export default function Home() {
         const formData = new FormData();
         formData.append("file", file);
         const res = await axios.post(`${API_URL}/upload-video`, formData, { headers });
-        setVideoUrls(prev => [...prev, res.data.url]);
+        const videoUrl = res.data.url.startsWith("/")
+          ? `${window.location.origin}${res.data.url}`
+          : res.data.url;
+        setVideoUrls(prev => [...prev, videoUrl]);
         setVideoNames(prev => [...prev, file.name]);
       } catch {
         setError("Failed to upload video");
