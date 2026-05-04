@@ -230,5 +230,7 @@ scripts/backups/
 ROADMAP.md
 DEPLOY_GUIDE.md
 infrastructure/terraform/*.tfvars
+infrastructure/terraform/*.tfplan
+infrastructure/terraform/tfplan
 infrastructure/terraform/.terraform/
 infrastructure/terraform/.terraform.lock.hcl
