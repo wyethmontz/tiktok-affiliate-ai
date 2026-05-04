@@ -737,6 +737,38 @@ Enable TikTok's in-app toggle: Post Settings → More options → AI-generated c
 
 ---
 
+## Pre-commit Checklist
+
+Run these before every commit to catch CI failures locally:
+
+```bash
+# Backend
+source venv/Scripts/activate
+python -m ruff check .          # must be zero errors before committing
+
+# Frontend
+cd ai-frontend
+npm run lint                    # must be zero errors before committing
+npm test -- --ci --passWithNoTests
+```
+
+### Rules that have caused CI failures — don't repeat these
+
+**Python**
+- Never call `create_client()` or any external service at module level — use lazy init (`if URL and KEY else None`) so imports don't crash when env vars are absent (tests mock at the attribute level, not import-time)
+- Every Pydantic field that accepts user text must have both `min_length` and `max_length` — missing `min_length=1` on `product` let empty strings through validation
+
+**Frontend**
+- Never use `require()` in `.js` files — the ESLint rule `@typescript-eslint/no-require-imports` blocks it; use ESM imports or add the file to `globalIgnores` in `eslint.config.mjs`
+- Don't call `setState` inside `useEffect` for one-time initialization from `localStorage` — use a lazy `useState` initializer: `useState(() => { ... })` instead
+- When writing Jest tests that use `jest.useFakeTimers()` with `@testing-library/user-event` v14, always use `userEvent.setup({ advanceTimers: jest.advanceTimersByTime.bind(jest) })` — calling `userEvent.type()` with global fake timers active causes the test to hang indefinitely
+- After adding any package to `package.json`, run `npm install` and commit the updated `package-lock.json` — `npm ci` in CI fails if the lock file is out of sync
+
+**CI / GitHub Actions**
+- Workflow `on: push/pull_request` branch filters must match the repo's actual default branch (`master`, not `main`) — mismatched branch name silently skips CI on all PRs
+
+---
+
 ## What NOT to Do
 
 - Don't bypass `core/llm.py` — always go through the wrapper so caching and model selection stay centralized
@@ -747,3 +779,21 @@ Enable TikTok's in-app toggle: Post Settings → More options → AI-generated c
 - Don't skip `terraform plan` before `terraform apply`
 - Don't run containers as root
 - Don't use `any` in TypeScript
+
+---
+
+## Deploy Guide Maintenance
+
+`DEPLOY_GUIDE.md` is the single source of truth for deploying this project from scratch.
+It must stay accurate and error-free at all times.
+
+**Rule: every error encountered while following the guide must be fixed in the guide immediately.**
+
+When a user hits an error during deployment:
+1. Identify which step in `DEPLOY_GUIDE.md` caused or failed to prevent the error
+2. Update that step so a user following the guide fresh would never hit the same error
+3. If the error reveals a missing warning, add a callout at the exact point where the user would go wrong
+4. If the error reveals a wrong or incomplete command, replace it with the confirmed-working version
+5. If the error is caused by an omission in `.gitignore` or another config file, fix that file too
+
+Do not just fix the immediate problem in the terminal — always trace it back to the guide and patch the root cause there.
