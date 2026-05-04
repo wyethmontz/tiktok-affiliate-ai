@@ -183,6 +183,207 @@ Never create a new client per request — it opens a new HTTP connection every t
 
 ---
 
+## .claudeignore
+
+Create `.claudeignore` in project root to exclude noise from Claude's context:
+
+```
+# Dependencies (huge, not needed by Claude)
+node_modules/
+__pycache__/
+.next/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+venv/
+.venv/
+
+# Secrets (NEVER include)
+.env
+.env.local
+.env.production
+google-creds.json
+
+# Large files
+*.log
+*.lock
+package-lock.json
+yarn.lock
+
+# Version control + IDE
+.git/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+**Cost Impact:** Reduces Claude's context overhead by 30–50% on every message.
+
+---
+
+## Context Management (Daily Habits)
+
+### When to Use `/clear` vs `/compact`
+
+**Use `/clear` when:**
+- Switching to a completely different task (auth → payments)
+- Task is fully completed and committed
+- Session has been running 90+ minutes
+- You want a fresh start with zero history
+
+**Use `/compact` when:**
+- Still working on the same feature
+- Context is growing but task isn't done
+- Want to trim old history while keeping recent changes
+- Need to continue without losing current state
+
+**Rule of thumb:** One Claude conversation = one cohesive feature or task.
+
+### Monitor `/usage` Every 30 Minutes
+
+```
+Type: /usage
+
+Then check:
+- Current tokens used this session
+- Estimated cost
+- Context level (if > 60%, consider /compact; if > 80%, use /clear)
+```
+
+Context levels:
+- **0–50%** — Good quality, efficient
+- **50–70%** — Decent, consider `/compact` soon
+- **70%+** — Time to `/compact` or `/clear`
+
+---
+
+## Daily Workflow Checklist
+
+### When Starting Work
+
+- [ ] Is the task clearly defined? (vague tasks cost more tokens)
+- [ ] Am I switching tasks? (if yes, run `/clear`)
+- [ ] Did I run `/doctor` to verify setup?
+- [ ] Is Sonnet selected? (default, not Opus)
+
+### While Working
+
+- [ ] Check `/usage` every 30 min
+- [ ] Context < 60%? (good)
+- [ ] Making progress or stuck? (stuck = try `/compact` + `/model`)
+- [ ] Tests passing locally before asking Claude?
+
+### Before Committing
+
+- [ ] Backend: `ruff check .` ✓
+- [ ] Frontend: `npm run lint` ✓
+- [ ] Tests passing locally
+- [ ] Reviewed the diff Claude suggested
+- [ ] Commit message matches convention in git log
+
+### When Done
+
+- [ ] Run `/clear` to free context
+- [ ] Move to next task fresh
+- [ ] Update CLAUDE.md if you discovered a new pattern
+
+---
+
+## Model Selection for This Project
+
+| Task | Model | Cost | Why |
+|---|---|---|---|
+| Strategy, copywriting, pipeline design | `claude-sonnet-4-6` | 1x | Creative + complex reasoning |
+| QA scoring, validation | `claude-haiku-4-5-20251001` | 0.1x | Cheap, sufficient for scoring |
+| Debugging, refactoring | `claude-sonnet-4-6` | 1x | Good balance of speed + accuracy |
+| Simple docs, comments | `claude-haiku-4-5-20251001` | 0.1x | Fast & cheap |
+| Stuck? Need breakthrough? | `claude-opus-4-7` | 5x | Only if Sonnet seems confused (rare) |
+
+**Default: Sonnet. Never use Opus unless truly stuck.**
+
+Set model: `/model sonnet`
+
+---
+
+## Prompt Templates for This Project
+
+### Backend Bug Fix
+
+```
+Error when calling [endpoint]: [paste error message]
+
+@api.py:[line range]
+@workflows/ad_pipeline.py (if relevant)
+@agents/[agent].py (if relevant)
+
+Expected behavior:
+[What should happen]
+
+I already tried:
+[What you tried]
+```
+
+**Example:**
+```
+Error when polling /jobs/{id}: 404 Not Found
+
+@api.py:216-222 (the get_job endpoint)
+@core/job_store.py (the store implementation)
+
+Expected: Should return the job status
+I already tried: Checking if job_id is correct
+```
+
+### Frontend Feature Request
+
+```
+Add [feature] to the ad generator UI
+
+Requirements:
+1. [What user sees]
+2. [What API calls are made]
+3. [User interaction flow]
+
+Follow existing pattern in:
+@ai-frontend/lib/api.ts (API calls)
+@ai-frontend/app/page.tsx (component pattern)
+```
+
+**Example:**
+```
+Add a "regenerate script only" button to let users re-run the copywriter without regenerating video
+
+Requirements:
+1. Button next to existing video regen button
+2. Call /regenerate-script endpoint
+3. Show progress, then update script field
+
+Follow pattern in ai-frontend/app/page.tsx (regenerateVideo function)
+```
+
+### Pipeline / Agent Change
+
+```
+Modify [agent/workflow] to [change needed]
+
+Current behavior: [what it does now]
+New behavior: [what it should do]
+Data flow: [what changes upstream/downstream]
+
+Files to touch:
+@agents/[agent].py
+@workflows/ad_pipeline.py
+@core/db.py (if DB schema changes)
+```
+
+---
+
 ## Python / FastAPI Standards
 
 ### Type Hints — Always
