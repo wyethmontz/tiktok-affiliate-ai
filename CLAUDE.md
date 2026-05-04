@@ -755,7 +755,9 @@ npm test -- --ci --passWithNoTests
 ### Rules that have caused CI failures — don't repeat these
 
 **Docker**
-- Always include `apt-get upgrade -y` before `apt-get install` in Dockerfiles — base images ship with unpatched OS packages; without an upgrade step, Trivy will find CRITICAL CVEs in `libssl`, `libexpat`, `libsqlite3`, etc.
+- Always upgrade OS packages in Dockerfiles — base images ship with unpatched packages; Trivy will find CRITICAL CVEs without it:
+  - Debian/slim: `apt-get upgrade -y` before `apt-get install`
+  - Alpine: `apk upgrade --no-cache` as a dedicated `RUN` step in the **runtime** stage (the stage that gets scanned)
 
 **Python**
 - Never call `create_client()` or any external service at module level — use lazy init (`if URL and KEY else None`) so imports don't crash when env vars are absent (tests mock at the attribute level, not import-time)
