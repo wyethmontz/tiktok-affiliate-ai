@@ -48,6 +48,7 @@ jobs:
           b64      = os.environ['COMPOSE_B64']
 
           script = "\n".join([
+              "#!/bin/bash",
               "set -euo pipefail",
               f"echo '{b64}' | base64 -d > /opt/app/docker-compose.yml",
               "cd /opt/app",
