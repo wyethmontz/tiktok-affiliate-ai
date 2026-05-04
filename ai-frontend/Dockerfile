@@ -7,12 +7,10 @@ RUN npm ci
 
 COPY . .
 
-ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ARG NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder
 
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 RUN npm run build
@@ -31,8 +29,10 @@ COPY --from=builder --chown=appuser:appgroup /app/public ./public
 
 USER appuser
 
+ENV HOSTNAME=0.0.0.0
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD wget -qO- http://localhost:3000 || exit 1
+    CMD wget -qO- http://127.0.0.1:3000 || exit 1
 
 EXPOSE 3000
 CMD ["node", "server.js"]

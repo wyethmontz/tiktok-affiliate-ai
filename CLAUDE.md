@@ -391,11 +391,9 @@ WORKDIR /app
 COPY package*.json .
 RUN npm ci
 COPY . .
-ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 RUN npm run build
 
@@ -407,8 +405,13 @@ COPY --from=builder --chown=appuser:appgroup /app/.next/standalone ./
 COPY --from=builder --chown=appuser:appgroup /app/.next/static ./.next/static
 COPY --from=builder --chown=appuser:appgroup /app/public ./public
 USER appuser
+
+# Next.js standalone binds to process.env.HOSTNAME — must be 0.0.0.0 to listen on all interfaces
+ENV HOSTNAME=0.0.0.0
+
+# Use 127.0.0.1 not localhost — Alpine resolves localhost to IPv6 (::1) which Next.js doesn't listen on
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD wget -qO- http://localhost:3000 || exit 1
+    CMD wget -qO- http://127.0.0.1:3000 || exit 1
 EXPOSE 3000
 CMD ["node", "server.js"]
 ```
@@ -755,6 +758,8 @@ npm test -- --ci --passWithNoTests
 ### Rules that have caused CI failures — don't repeat these
 
 **Docker**
+- Always use `127.0.0.1` not `localhost` in healthchecks for Alpine-based containers — Alpine resolves `localhost` to IPv6 (`::1`) and the app won't be listening there, causing permanent `unhealthy` status even when the app is running fine
+- Next.js standalone requires `ENV HOSTNAME=0.0.0.0` in the Dockerfile runtime stage — without it, Next.js binds to the container's hostname instead of all interfaces, making it unreachable via `localhost` or `127.0.0.1`
 - Always upgrade OS packages in Dockerfiles — base images ship with unpatched packages; Trivy will find CRITICAL CVEs without it:
   - Debian/slim: `apt-get upgrade -y` before `apt-get install`
   - Alpine: `apk upgrade --no-cache` as a dedicated `RUN` step in the **runtime** stage (the stage that gets scanned)

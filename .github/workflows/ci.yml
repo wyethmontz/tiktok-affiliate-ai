@@ -149,7 +149,6 @@ jobs:
           docker build \
             -t $ECR_REGISTRY/$FRONTEND_REPO:${{ github.sha }} \
             -t $ECR_REGISTRY/$FRONTEND_REPO:latest \
-            --build-arg NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }} \
             --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_KEY }} \
             ./ai-frontend

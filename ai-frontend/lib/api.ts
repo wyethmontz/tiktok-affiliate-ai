@@ -1,6 +1,6 @@
 import { getSupabase } from "./supabase";
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export const API_URL = "/api/backend";
 
 /**
  * Returns headers with the current Supabase access token attached as Bearer.

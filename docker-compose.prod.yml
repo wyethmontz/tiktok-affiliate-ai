@@ -13,6 +13,15 @@ services:
     image: ${FRONTEND_IMAGE}
     ports:
       - "3000:3000"
+    environment:
+      - HOSTNAME=0.0.0.0
+      - BACKEND_URL=http://backend:8000
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
     depends_on:
       backend:
         condition: service_healthy
